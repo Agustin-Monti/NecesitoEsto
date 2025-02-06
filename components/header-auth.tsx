@@ -5,10 +5,11 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 import {
-  UserIcon,
+  UserIcon,ArrowRightStartOnRectangleIcon
 } from "@heroicons/react/24/solid";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-export default async function AuthButton() {
+export default async function AuthButton({ user }: { user: any }) {
   // Check environment variables (ensure this is called async if needed)
   if (!hasEnvVars) {
     return (
@@ -45,28 +46,39 @@ export default async function AuthButton() {
   }
 
   // Create Supabase client and get user data
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
   return user ? (
-    <div className="flex items-center gap-4">
-      <Link className="ito" href="/profile">
-              <UserIcon className="w-6 h-6 ito mx-auto" />          
-              <p className="hidden md:flex">{user.email}</p>
-      </Link>
-      <form action={signOutAction}>
-        
-        <Button type="submit" variant={"outline"}>
-          Cerrar Sesión
-        </Button>
-      </form>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger className="p-2">
+        <UserIcon className="h-6 w-6 text-black" />
+        <span className="hidden xl:flex">Perfil</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <div className="px-4 py-2 text-sm text-gray-700">
+          <p className="font-semibold">Hola, {user.email}</p>
+        </div>
+        <DropdownMenuItem asChild>
+          <Link href="/settings" className="w-full text-left">
+            <UserIcon className="h-6 w-6 text-black" />
+              Ir a Perfil
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <form action={signOutAction} className="w-full">
+            <button type="submit" className="w-full flex items-center gap-2 text-left text-red-600">
+              <ArrowRightStartOnRectangleIcon className="h-6 w-6 text-black" />
+              Cerrar Sesión
+            </button>
+          </form>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   ) : (
     <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
+      <Button asChild size="sm" variant="outline">
         <Link href="/sign-in">Iniciar Sesión</Link>
       </Button>
-      <Button asChild size="sm" variant={"default"}>
+      <Button asChild size="sm" variant="default">
         <Link href="/sign-up">Crear Cuenta</Link>
       </Button>
     </div>

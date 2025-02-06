@@ -7,7 +7,7 @@ const client = new MercadoPagoConfig({
     accessToken: process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN!,
 });
 
-const baseUrl = "https://5aee-181-209-95-211.ngrok-free.app/";
+const baseUrl = "https://54b5-181-209-95-211.ngrok-free.app/";
 
 // Configuración de Supabase
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
 
           
-            const { title, quantity, price, id, nombre_pagador, correo_pagador } = req.body;
+            const { title, quantity, finalPrice, id, nombre_pagador, correo_pagador } = req.body;
 
             if (!id || !title || !correo_pagador || !nombre_pagador) {
                 return res.status(400).json({ error: "Faltan datos requeridos." });
@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         id: id,
                         title: title,
                         quantity: Number(quantity) || 1,
-                        unit_price: price || 5,
+                        unit_price: finalPrice || 5,
                         currency_id: "ARS",
                     },
                 ],
@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     nombre_pagador: nombre_pagador,
                     correo_pagador: correo_pagador,
                     numero_pago: result.id,
-                    monto: price,
+                    monto: finalPrice,
                     metodo_pago: 'Mercado Pago', // Agrega el método de pago
                 });
 

@@ -5,6 +5,7 @@ import axios from 'axios';
 import { createClient } from '@/utils/supabase/client';
 import { ShareIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
+import { getCupon  } from '@/actions/demanda-actions';
 
 interface Demanda {
   id: string;
@@ -38,10 +39,10 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
   const [nombrePagador, setNombrePagador] = useState<string>('');
   const [correoPagador, setCorreoPagador] = useState<string>('');
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const precioDemandaUSD = 10;
+  const [precioDemandaUSD] = useState(10); // Precio fijo de 10 USD
   const [finalPrice, setFinalPrice] = useState(precioDemandaUSD);
+  const [couponCode, setCouponCode] = useState<string>('');
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [usdToArs] = useState(1200); // USD to ARS rate
   const supabase = createClient();
 
@@ -84,7 +85,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
       console.log('Demanda to create preference:', {
         id: demanda.id,
         detalle: demanda.detalle,
-        precio: demanda.precio,
+        precio: finalPrice,
         nombre_pagador: nombrePagador,
         correo_pagador: correoPagador,
       });
@@ -100,7 +101,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
         id: demanda.id,
         title: demanda.detalle,
         quantity: 1,  // Adjust quantity as needed
-        price: demanda.precio,  // Use the actual price of the demanda
+        price: finalPrice,  // Use the actual price of the demanda
         nombre_pagador: nombrePagador,
         correo_pagador: correoPagador,
       });
@@ -128,21 +129,51 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
     setShowPaymentMethods(true);  // Cambiar estado para mostrar métodos de pago
   };
 
-  // Handle coupon code change and calculate final price
-  const handleCouponChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Manejo del cupón
+  const handleCouponChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const code = event.target.value;
     setCouponCode(code);
-
-    // Check if the coupon is valid (for demo purposes, a simple condition)
-    if (code === 'DESC10') {
-      const discount = 0.1; // 10% discount
-      setCouponDiscount(discount);
-      setFinalPrice(precioDemandaUSD * (1 - discount));
-    } else {
+    console.log("Código del cupón ingresado:", code);
+  
+    if (!code) {
+      setCouponDiscount(0);
+      setFinalPrice(precioDemandaUSD); // Vuelve al precio original si no hay cupón
+      return;
+    }
+  
+    try {
+      const response = await getCupon(code);
+      console.log("Respuesta del servidor:", response);  // Verifica la respuesta de la API
+  
+      if (response.success && response.data) {
+        const cupon = response.data;
+  
+        // Verifica si el cupón es válido
+        if (cupon.activo && cupon.usos_realizados < cupon.usos_maximos && new Date(cupon.fecha_expiracion) > new Date()) {
+          const discount = cupon.descuento / 100;  // Descuento en formato decimal (50% -> 0.5)
+          const newFinalPrice = precioDemandaUSD * (1 - discount);  // Aplica el descuento al precio original
+  
+          setCouponDiscount(cupon.descuento);  // Establece el descuento
+          setFinalPrice(newFinalPrice);  // Actualiza el precio final
+        } else {
+          // Si el cupón no es válido, restablece el precio
+          setCouponDiscount(0);
+          setFinalPrice(precioDemandaUSD);
+        }
+      } else {
+        // Si no se encontró el cupón o hay un error, restablece el precio
+        setCouponDiscount(0);
+        setFinalPrice(precioDemandaUSD);
+      }
+    } catch (error) {
+      console.error('Error al validar el cupón:', error);
       setCouponDiscount(0);
       setFinalPrice(precioDemandaUSD);
     }
   };
+  
+  
+  
 
   if (!isOpen) return null;  // Do not render the modal if it's not open
 
@@ -212,55 +243,44 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
         </div>
       </div>
 
-
-      {/* Mostrar precio en USD y ARS */}
-      <div className="mt-4 text-center">
-  {/* Titulo con estilo */}
-  <h3 className="text-2xl font-semibold text-gray-800 mb-3">Precios Disponibles</h3>
-
-  {/* Contenedor de precios */}
-  <div className="flex justify-center space-x-6 bg-gradient-to-r from-blue-500 to-green-400 p-4 rounded-xl shadow-lg mb-4">
-    {/* Precio en USD */}
-    <div className="text-white">
-      <p className="text-xl font-bold">Precio en USD</p>
-      <p className="text-3xl">${precioDemandaUSD}</p>
-    </div>
-    {/* Separador de precios */}
-    <div className="w-px bg-white h-12" />
-    {/* Precio en ARS */}
-    <div className="text-white">
-      <p className="text-xl font-bold">Precio en ARS</p>
-      <p className="text-3xl">${precioDemandaUSD * usdToArs}</p>
-    </div>
-  </div>
-
-  {/* Cupón y precio final */}
-      <div className="bg-gray-100 p-4 rounded-xl shadow-md border-t-4 border-blue-500">
-        <p className="text-xl font-semibold text-gray-800">Cupón de Descuento</p>
-        <div className="flex items-center justify-center space-x-2 mt-2">
-          <input 
-            type="text" 
-            value={couponCode} 
-            onChange={handleCouponChange} 
-            className="p-2 border rounded-lg shadow-sm w-2/3 focus:ring-2 focus:ring-blue-500"
-            placeholder="Ingresa tu cupón aquí"
-          />
-          <button 
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Aplicar
-          </button>
+      {/* Cupón y precio final */}
+        <div className="bg-gray-100 p-4 rounded-xl shadow-md border-t-4 border-blue-500">
+          <p className="text-xl font-semibold text-gray-800">Cupón de Descuento</p>
+          <div className="flex items-center justify-center space-x-2 mt-2">
+            <input 
+              type="text" 
+              value={couponCode} 
+              onChange={handleCouponChange} 
+              className="p-2 border rounded-lg shadow-sm w-2/3 focus:ring-2 focus:ring-blue-500"
+              placeholder="Ingresa tu cupón aquí"
+            />
+            <button 
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Aplicar
+            </button>
+          </div>
         </div>
 
-        {/* Mostrar el descuento y el nuevo precio */}
-        {couponDiscount > 0 && (
-          <div className="mt-4 text-lg text-green-600">
-            <p><strong>Descuento: </strong>{couponDiscount * 100}%</p>
-            <p><strong>Nuevo Precio: </strong>${finalPrice}</p>
+
+        {/* Mostrar el precio final en USD y ARS */}
+        <div className="mt-4 text-center">
+          <h3 className="text-2xl font-semibold text-gray-800 mb-3">Precios Disponibles</h3>
+
+          <div className="flex justify-center space-x-6 bg-gradient-to-r from-blue-500 to-green-400 p-4 rounded-xl shadow-lg mb-4">
+            {/* Precio en USD */}
+            <div className="text-white">
+              <h4 className="text-xl">Precio en USD</h4>
+              <p className="text-2xl font-bold">{finalPrice.toFixed(2)} USD</p>
+            </div>
+
+            {/* Precio en ARS */}
+            <div className="text-white">
+              <h4 className="text-xl">Precio en ARS</h4>
+              <p className="text-2xl font-bold">{(finalPrice * usdToArs).toFixed(0)} ARS</p>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
 
 
 
@@ -299,7 +319,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
                 createOrder={(data, actions) => {
                   return actions.order.create({
                     intent: 'CAPTURE',
-                    purchase_units: [{ amount: { value: `${demanda.precio}`, currency_code: 'USD' }, description: demanda.detalle }],
+                    purchase_units: [{ amount: { value: `${finalPrice}`, currency_code: 'USD' }, description: demanda.detalle }],
                   });
                 }}
                 onApprove={async (data, actions) => {
@@ -311,7 +331,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
                       nombre_pagador: nombrePagador,
                       correo_pagador: correoPagador,
                       numero_pago: details.id,
-                      monto: demanda.precio,
+                      monto: finalPrice,
                       fecha_pago: new Date().toISOString(),
                       estado_pago: 'aprobado',
                       id_transaccion: details.id,

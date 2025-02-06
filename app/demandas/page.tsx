@@ -20,7 +20,6 @@ export default async function ProtectedPage() {
   const demandas = await getAllDemandas();
 
   // Comprobar en consola las demandas recuperadas
-  console.log("Todas las demandas:", demandas);
   const { data: categorias } = await supabase.from("categorias").select("id, categoria");
 
   return (

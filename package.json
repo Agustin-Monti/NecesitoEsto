@@ -24,6 +24,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "framer-motion": "^12.1.0",
     "geist": "^1.2.1",
     "heroicons": "^2.1.5",
     "lucide-react": "^0.436.0",

@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import ModalDetallesPago from '@/components/ModalDetallesPago';
-import { deleteDemanda, getDemandasByCategoria } from '@/actions/demanda-actions';
-import Search from './ui/search'; // Assuming Search component is in the 'ui' folder
+import { getDemandasByCategoria, getRubrosByCategoria, getDemandasByRubro } from '@/actions/demanda-actions';
+import Search from './ui/search';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+
 
 interface DemandasClienteProps {
   demandas: any[];
@@ -14,11 +15,12 @@ interface DemandasClienteProps {
 }
 
 export default function DemandasCliente({ demandas, userId, categorias }: DemandasClienteProps) {
-  const [demandasList, setDemandasList] = useState(demandas);
   const [filteredDemandas, setFilteredDemandas] = useState(demandas);
   const [modalOpen, setModalOpen] = useState(false);
   const [demandaSeleccionada, setDemandaSeleccionada] = useState<any | null>(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
+  const [rubroSeleccionado, setRubroSeleccionado] = useState('');
+  const [rubros, setRubros] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const searchParams = useSearchParams();
 
@@ -32,85 +34,139 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     setDemandaSeleccionada(null);
   };
 
-  const handleDeleteDemanda = async (id: string | number) => {
-    try {
-      const idString = String(id); // Convert id to string
-      await deleteDemanda(idString); // Use idString which is a string
-      setDemandasList((prevDemandas) =>
-        prevDemandas.filter((demanda) => demanda.id !== idString)
-      );
-      console.log('Demanda eliminada correctamente:', idString);
-    } catch (error) {
-      console.error('Error al borrar la demanda:', error);
-    }
-  };
-
+  // Lógica para cambiar la categoría y obtener los rubros asociados
   const handleCategoriaChange = async (idCategoria: string) => {
-    if (categoriaSeleccionada === idCategoria) return; // Avoid unnecessary requests
+    setCategoriaSeleccionada(idCategoria);
+    setRubroSeleccionado(''); // Reiniciar rubro cuando cambia la categoría
 
     try {
-      setCategoriaSeleccionada(idCategoria);
+      // Filtrar demandas solo por la categoría seleccionada
       const demandasFiltradas = idCategoria
         ? await getDemandasByCategoria(idCategoria)
-        : demandas; // Show all if there's no filter
+        : demandas;
+
       setFilteredDemandas(demandasFiltradas);
+      setRubros(await getRubrosByCategoria(idCategoria)); // Cargar rubros al seleccionar una categoría
     } catch (error) {
       console.error('Error al filtrar por categoría:', error);
     }
   };
 
-  const reiniciarFiltro = () => {
-    setCategoriaSeleccionada('');
-    setFilteredDemandas(demandas);
+  // Lógica para cambiar el rubro y obtener las demandas filtradas por rubro
+  const handleRubroChange = async (idRubro: string) => {
+    setRubroSeleccionado(idRubro);
+
+    try {
+      let demandasFiltradas = [...demandas];  // Usamos las demandas iniciales
+
+      if (idRubro) {
+        // Si se ha seleccionado un rubro, obtenemos las demandas solo por ese rubro
+        demandasFiltradas = await getDemandasByRubro(idRubro);
+      }
+
+      // Si no se ha seleccionado rubro, se muestran todas las demandas de la categoría seleccionada
+      if (!idRubro && categoriaSeleccionada) {
+        demandasFiltradas = demandasFiltradas.filter((demanda) =>
+          demanda.categorias?.id === categoriaSeleccionada
+        );
+      }
+
+      setFilteredDemandas(demandasFiltradas);
+    } catch (error) {
+      console.error('Error al filtrar por rubro:', error);
+    }
   };
 
-  // Handle Search
-  const handleSearch = (term: string) => {
-    setSearchQuery(term);
-  };
-
-  // Filter demands based on search query
+  // Efecto para aplicar el filtro de búsqueda
   useEffect(() => {
-    if (searchQuery === '') {
-      setFilteredDemandas(demandas);
-    } else {
-      const filtered = demandas.filter((demanda) =>
+    let demandasFiltradas = demandas;
+
+    // Filtrar por búsqueda
+    if (searchQuery) {
+      demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.detalle.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredDemandas(filtered);
     }
-  }, [searchQuery, demandas]);
+
+    // Filtrar por categoría (si no se ha seleccionado rubro)
+    if (categoriaSeleccionada && !rubroSeleccionado) {
+      demandasFiltradas = demandasFiltradas.filter((demanda) =>
+        demanda.categorias?.id === categoriaSeleccionada
+      );
+    }
+
+    // Filtrar por rubro (si se ha seleccionado rubro)
+    if (rubroSeleccionado) {
+      demandasFiltradas = demandasFiltradas.filter((demanda) =>
+        demanda.rubros?.id === rubroSeleccionado
+      );
+    }
+
+    setFilteredDemandas(demandasFiltradas);
+  }, [searchQuery, categoriaSeleccionada, rubroSeleccionado, demandas]);
+
+
+  // Función para reiniciar todos los filtros
+  const resetFilters = () => {
+    setCategoriaSeleccionada('');
+    setRubroSeleccionado('');
+    setSearchQuery('');
+    setFilteredDemandas(demandas);  // Mostrar todas las demandas sin filtros
+  };
 
   return (
     <div className="mb-4">
       {/* Filtros */}
-      <div className="mb-4">
-        {/* Search Component */}
-        <div className="mb-2">
-          <Search placeholder="Buscar Necesidades..." handleSearch={handleSearch} />
+      <div className="flex items-center justify-between gap-6 mb-6">
+        <div className="w-1/3">
+          {/* Filtro de Categorías */}
+          <select
+            onChange={(e) => handleCategoriaChange(e.target.value)}
+            value={categoriaSeleccionada}
+            className="w-full py-2 px-4 border rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Seleccionar Categoría</option>
+            {categorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.categoria}
+              </option>
+            ))}
+          </select>
         </div>
-        {/* Categoria Filter */}
-        <select
-          id="categoria"
-          value={categoriaSeleccionada}
-          onChange={(e) => handleCategoriaChange(e.target.value)}
-          className="border border-gray-300 rounded-md py-2 px-3"
-        >
-          <option value="">Todas las categorías</option>
-          {categorias.map((categoria) => (
-            <option key={categoria.id} value={categoria.id}>
-              {categoria.categoria}
-            </option>
-          ))}
-        </select>
 
-        <button
-          className="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md"
-          onClick={reiniciarFiltro}
-          aria-label="Reiniciar filtro"
-        >
-          Reiniciar filtro
-        </button>
+        <div className="w-1/3">
+          {/* Filtro de Rubros */}
+          <select
+            onChange={(e) => handleRubroChange(e.target.value)}
+            value={rubroSeleccionado}
+            className="w-full py-2 px-4 border rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Seleccionar Rubro</option>
+            {rubros.map((rubro) => (
+              <option key={rubro.id} value={rubro.id}>
+                {rubro.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="w-1/3">
+          {/* Filtro de búsqueda */}
+          <Search
+            placeholder="Buscar Necesidades..."
+            handleSearch={setSearchQuery}
+          />
+        </div>
+
+        <div>
+          {/* Botón para reiniciar los filtros */}
+          <button
+            onClick={resetFilters}
+            className="ml-4 py-2 px-4 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none"
+          >
+            Reiniciar Filtros
+          </button>
+        </div>
       </div>
 
       {/* Lista de demandas */}
@@ -174,15 +230,6 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
                 </div>
               </div>
 
-              {demanda.profile_id && (
-                <button
-                  onClick={() => handleDeleteDemanda(Number(demanda.id))}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600"
-                  aria-label={`Eliminar demanda ${demanda.detalle}`}
-                >
-                  <i className="fas fa-trash-alt"></i>
-                </button>
-              )}
             </div>
           ))
         ) : (
@@ -191,12 +238,12 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       </div>
 
       {/* Modal */}
-      <ModalDetallesPago
-        isOpen={modalOpen}
-        onClose={cerrarModal}
-        demanda={demandaSeleccionada}
-      />
+      <ModalDetallesPago isOpen={modalOpen} onClose={cerrarModal} demanda={demandaSeleccionada} />
     </div>
   );
 }
+
+
+
+
 

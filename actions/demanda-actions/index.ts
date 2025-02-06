@@ -287,18 +287,26 @@ export async function deleteDemanda(id: string) {
 
 export async function getDemandasByCategoria(idCategoria: string) {
   const supabase = await createClient();
-  const { data: demandas, error } = await supabase
+  const { data, error } = await supabase
     .from("demandas")
-    .select("*")
-    .eq("id_categoria", idCategoria); // Filtrar por categoría
+    .select(`
+      id, 
+      detalle, 
+      fecha_inicio, 
+      fecha_vencimiento, 
+      categorias (id, categoria), 
+      rubros (id, nombre)
+    `)
+    .eq("id_categoria", idCategoria);
 
   if (error) {
-    console.error("Error fetching demandas by category:", error);
+    console.error("Error obteniendo demandas por categoría:", error);
     return [];
   }
 
-  return demandas;
+  return data;
 }
+
 
 
 export async function getCategorias() {
@@ -347,3 +355,57 @@ export async function getRubros() {
   return data;
 }
 
+export async function getRubrosByCategoria(idCategoria: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("rubros")
+    .select("*")
+    .eq("categoria_id", idCategoria); // Filtrar por categoría
+
+  if (error) {
+    console.error("Error obteniendo rubros por categoría:", error);
+    return [];
+  }
+
+  return data;
+}
+
+
+export async function getDemandasByRubro(idRubro: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("demandas")
+    .select(`
+      id, 
+      detalle, 
+      fecha_inicio, 
+      fecha_vencimiento, 
+      categorias (id, categoria), 
+      rubros (id, nombre)
+    `)
+    .eq("rubro_id", idRubro);
+
+  if (error) {
+    console.error("Error obteniendo demandas por rubro:", error);
+    return [];
+  }
+
+  return data;
+}
+
+
+export const getCupon = async (codigo: string) => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('cupones')
+    .select('*')
+    .eq('codigo', codigo)
+    .single();
+
+  if (error) {
+    console.error('Error fetching coupon:', error);
+    return { success: false, data: null };
+  }
+
+  return { success: true, data };
+};
