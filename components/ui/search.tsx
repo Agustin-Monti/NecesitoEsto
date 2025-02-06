@@ -17,7 +17,7 @@ export default function Search({ placeholder, handleSearch }: SearchProps) {
   return (
     <div className="relative flex flex-1 flex-shrink-0">
       <label htmlFor="search" className="sr-only">
-        Search
+        Buscar Nesecidad...
       </label>
       <input
         className="peer block w-full py-[9px] pl-10 text-sm placeholder:text-black bg-white border rounded-lg"
