@@ -16,7 +16,7 @@ export default function ForgotPassword (){
     <>
       <form className="flex flex-col mx-auto my-auto justify-center p-6 w-[80vw] md:w-[30vw] border-slate-950 border-2 rounded-md">
         <div>
-          <h1 className="text-2xl font-medium">Reset Password</h1>
+          <h1 className="text-2xl font-medium">Cambiar Contraseña</h1>
           <p className="text-sm text-secondary-foreground">
             Ya tienes una cuenta?{" "}
             <Link className="text-primary underline" href="/sign-in">
@@ -26,9 +26,9 @@ export default function ForgotPassword (){
         </div>
         <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
           <Label htmlFor="email">Email</Label>
-          <Input name="email" placeholder="you@example.com" required />
+          <Input name="email" placeholder="tu@ejemplo.com" required />
           <SubmitButton formAction={forgotPasswordAction}>
-            Reset Password
+            Cambiar Contraseña
           </SubmitButton>
           {/*<FormMessage message={searchParams} */}
         </div>
