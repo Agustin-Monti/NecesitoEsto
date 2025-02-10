@@ -21,24 +21,24 @@ export default function Signup({/*{ searchParams }: { searchParams: Message }*/}
         <p className="text-sm text text-foreground">
           Ya tiene una cuenta?{" "}
           <Link className="text-blue-600 font-medium underline" href="/sign-in">
-            Log in
+            Iniciar Sesion
           </Link>
         </p>
         <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
           <Label htmlFor="email">Email</Label>
           <Input 
           className="mt-1 block w-full rounded-md border-slate-950 border-b-2"
-          name="email" placeholder="you@example.com" required />
-          <Label htmlFor="password">Password</Label>
+          name="email" placeholder="tu@ejemplo.com" required />
+          <Label htmlFor="password">Contraseña</Label>
           <Input
             className="mt-1 block w-full rounded-md border-slate-950 border-b-2"
             type="password"
             name="password"
-            placeholder="Your password"
+            placeholder="Tu Contraseña"
             minLength={6}
             required
           />
-          <SubmitButton className="bg-blue-500 text-white text-center mt-2 p-2 rounded-lg hover:bg-blue-600" formAction={signUpAction} pendingText="Signing up...">
+          <SubmitButton className="bg-blue-500 text-white text-center mt-2 p-2 rounded-lg hover:bg-blue-600" formAction={signUpAction} pendingText="Accediendo...">
             Registrarse
           </SubmitButton>
           {/*<FormMessage message={searchParams} />*/}
