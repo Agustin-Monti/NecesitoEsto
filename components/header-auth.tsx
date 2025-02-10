@@ -64,12 +64,10 @@ export default async function AuthButton({ user }: { user: any }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <form action={signOutAction} className="w-full">
-            <button type="submit" className="w-full flex items-center gap-2 text-left text-red-600">
+            <button type="submit" className="w-full flex items-center gap-2 text-left text-red-600" onClick={signOutAction}>
               <ArrowRightStartOnRectangleIcon className="h-6 w-6 text-black" />
               Cerrar Sesión
             </button>
-          </form>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
