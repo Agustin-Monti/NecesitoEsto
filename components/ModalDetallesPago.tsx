@@ -179,7 +179,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
-  <div className="bg-white p-8 rounded-lg shadow-lg max-w-5xl w-full relative">
+  <div className="bg-white p-8 rounded-lg shadow-lg max-w-5xl w-full h-[550px] relative">
     {/* Botón de cerrar */}
     <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-lg">
       ✕
@@ -225,28 +225,27 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
             Compartir
           </button>
         </div>
-      </div>
 
-      {/* Columna derecha: Opciones de pago */}
-      <div className="flex flex-col items-center justify-center">
-
-      <div className="flex justify-end">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 p-4 rounded-lg shadow-md w-90 mb-3">
-          <div className="flex items-center">
-            <span className="text-2xl mr-2">💡</span>
-            <h4 className="font-bold">¡Oportunidad única!</h4>
+        <div className="flex justify-end mt-9">
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 p-4 rounded-lg shadow-md w-90">
+            <div className="flex items-center">
+              <span className="text-2xl mr-2">💡</span>
+              <h4 className="font-bold">¡Oportunidad única!</h4>
+            </div>
+            <p className="mt-2 text-sm">
+              Su nuevo negocio está en su mano. Realice ahora un pago único y le enviaremos los datos para que se contacte en forma directa y brinde su solución de servicio o cotización de forma inmediata.  
+              <strong>Decida ahora antes que su competencia.</strong>
+            </p>
           </div>
-          <p className="mt-2 text-sm">
-            Su nuevo negocio está en su mano. Realice ahora un pago único y le enviaremos los datos para que se contacte en forma directa y brinde su solución de servicio o cotización de forma inmediata.  
-            <strong>Decida ahora antes que su competencia.</strong>
-          </p>
         </div>
       </div>
 
-      {/* Cupón y precio final */}
+      {/* Columna derecha: Opciones de pago */}
+      <div className="flex flex-col items-center justify-start">
+        {/* Cupón y precio final */}
         <div className="bg-gray-100 p-4 rounded-xl shadow-md border-t-4 border-blue-500">
           <p className="text-xl font-semibold text-gray-800">Cupón de Descuento</p>
-          <div className="flex items-center justify-center space-x-2 mt-2">
+          <div className="flex items-center justify-center space-x-2">
             <input 
               type="text" 
               value={couponCode} 
