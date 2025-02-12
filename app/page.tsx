@@ -1,6 +1,5 @@
 // pages/index.js
 import Hero from "@/components/hero";
-import Table from "@/components/categorias";
 import Pais from "@/components/paises";
 import SliderDemandas  from "@/components/SliderDemandas";
 import { getAllDemandasLimit } from "@/actions/demanda-actions";
@@ -31,9 +30,8 @@ export default async function Index() {
               <SliderDemandas demandas={demandas} />     
           </div>
 
-          <div className="flex flex-col justify-center mt-12 h-auto md:h-[500px] md:text-base text-lg">
-            <h1 className="text-2xl font-bold text-center hover:underline">Categorías</h1>
-            <Table categorias={categorias || []} />
+          <div className="">
+            <Pasos />
           </div>
         </div>
         <Seccion />
