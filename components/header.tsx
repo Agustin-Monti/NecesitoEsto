@@ -37,7 +37,7 @@ export const Header = ({ user }: { user: any }) => {
                 </Link>
               </li>
               <li className="flex flex-col items-center cursor-pointer">
-                <Link className="ito" href="#">
+                <Link className="ito" href={`/nosotros`}>
                   <UserGroupIcon className="w-6 h-6 mx-auto" />
                   <p className="hidden xl:flex">Nosotros</p>
                 </Link>
