@@ -2,6 +2,7 @@
 import Hero from "@/components/hero";
 import Pais from "@/components/paises";
 import SliderDemandas  from "@/components/SliderDemandas";
+import Pasos from "@/components/pasos";
 import { getAllDemandasLimit } from "@/actions/demanda-actions";
 import { fetchCategorias } from "@/actions/categorias-actions";
 import { fetchPaises } from "@/actions/paises-actions";
