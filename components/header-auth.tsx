@@ -58,7 +58,7 @@ export default async function AuthButton({ user }: { user: any }) {
           <p className="font-semibold">Hola, {user.email}</p>
         </div>
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="w-full text-left">
+          <Link href="/profile" className="w-full text-left">
             <UserIcon className="h-6 w-6 text-black" />
               Ir a Perfil
           </Link>
