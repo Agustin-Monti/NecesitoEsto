@@ -1,96 +1,96 @@
-import React, { useState, useEffect } from "react";
-import { deleteDemanda, fetchDemandas } from "@/actions/demanda-actions"; // Función para obtener las demandas del usuario
-import ModalDemandaUsuario from "./ModalDemandaUsuario"; // Modal para editar la demanda
-import Link from "next/link";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { useEffect, useState } from 'react';
+import { fetchDemandas } from '@/actions/demanda-actions'; // Ajusta la ruta a tu función
+import  ModalDemandaUsuario  from '@/components/ModalDemandaUsuario'; // Ajusta la ruta a tu función
+import Link from 'next/link';
+import { PencilIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid'; // Asegúrate de importar los íconos
 
-interface Demanda {
-  id: number;
-  detalle: string;
-  rubro_demanda: string;
-  empresa: string;
-  telefono: string;
-  fecha_inicio: Date;
-  fecha_vencimiento: Date;
-}
+const DemandaUsuario = ({ userId }: { userId: string }) => {
+  const [demandas, setDemandas] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDemanda, setSelectedDemanda] = useState<any | null>(null);
 
-interface DemandaUsuarioProps {
-  userId: string; // Recibimos el userId como prop
-}
-
-const DemandaUsuario: React.FC<DemandaUsuarioProps> = ({ userId }) => {
-  const [demandas, setDemandas] = useState<Demanda[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Controla la apertura del modal
-  const [selectedDemanda, setSelectedDemanda] = useState<Demanda | null>(null); // Demanda seleccionada para editar
-
+  // Fetch demandas al montar el componente
   useEffect(() => {
-    // Obtener demandas del usuario
-    const loadDemandas = async () => {
-      const data = await fetchDemandas(userId); // Pasar userId a la función de obtención de demandas
-      setDemandas(data); // Establecer las demandas en el estado
+    const getDemandas = async () => {
+      const data = await fetchDemandas(userId);
+      setDemandas(data);
     };
 
-    if (userId) {
-      loadDemandas();
-    }
-  }, [userId]); // Recargar las demandas si el userId cambia
+    getDemandas();
+  }, [userId]);
 
-  const handleEdit = (demanda: Demanda) => {
-    setSelectedDemanda(demanda); // Establecer la demanda seleccionada
-    setIsModalOpen(true); // Abrir el modal
+  const handleEdit = (demanda: any) => {
+    setSelectedDemanda(demanda);
+    setIsModalOpen(true);
   };
 
-  {/*const handleDelete = async (demandaId) => {
-    try {
-      const result = await deleteDemanda(demandaId.toString()); // Eliminar demanda usando el ID
-      console.log(result.message); // Opcional, loguea el mensaje de éxito
-    } catch (error) {
-      console.error("Error al eliminar demanda:", error); // Maneja el error si ocurre
-    }
-  };*/}
+  const handleDelete = async (demandaId: string) => {
+    // Lógica para eliminar demanda (esto debería hacerse en Supabase)
+  };
 
   return (
-    <div className="flex justify-center flex-col">
-      {/*<h2 className="font-bold text-2xl mb-4">Demandas del Usuario</h2>*/}
+    <div className="flex flex-col items-center pb-5">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Mis Demandas</h2>
+
       {demandas.length === 0 ? (
-        <div className="text-center d-flex justify-center">
-          <p className="text-lg">No tienes demandas creadas aún.</p>
-        </div>
+        <p className="text-lg text-gray-600">No tienes demandas creadas aún.</p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 justify-center text-center">
-          {demandas.map((demanda) => (
-            <div
-              key={demanda.id}
-              className="border border-slate-950 rounded-lg m-1 h-[150px] p-4 rounded-lg shadow-md d-flex self-center"
-            >
-              <h3 className="font-bold text-xl">{demanda.detalle}</h3>
-              <p className="text-gray-600">{demanda.rubro_demanda}</p>
-              <button
-                className="flex items-center mt-3 p-2 bg-blue-600 text-white rounded float-left"
-                onClick={() => handleEdit(demanda)} // Al hacer clic, se abre el modal
-              >
-                <PencilIcon className="h-5 w-5 mr-2" /> Editar
-              </button>
-              <button
-                className="flex items-center mt-3 p-2 bg-red-600 text-white rounded float-right"
-              >
-                <TrashIcon className="h-5 w-5 mr-2" /> Eliminar
-              </button>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
+          {demandas.map((demanda) => {
+            const fechaVencimiento = new Date(demanda.fecha_vencimiento);
+            const hoy = new Date();
+            const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+
+            let advertencia = null;
+            if (diferenciaDias < 0) {
+              advertencia = "Demanda vencida. Renueva la fecha para que aparezca en el portal de demandas.";
+            } else if (diferenciaDias <= 2) {
+              advertencia = "La demanda está por vencer. Renueva la fecha editando la demanda.";
+            }
+
+            return (
+              <div key={demanda.id} className="bg-white shadow-lg rounded-xl p-5 border border-gray-200 hover:shadow-xl transition duration-300 flex flex-col h-[300px]">
+                <h3 className="text-lg font-semibold text-gray-800 truncate">{demanda.detalle}</h3>
+                <p className="text-gray-500 text-sm">Categoría: {demanda.categorias?.categoria || "Sin Categoría"}</p>
+                <p className="text-gray-500 text-sm">Rubro: {demanda.rubros?.nombre || "Sin Rubro"}</p>
+                <p className="text-gray-500 text-sm">Empresa: {demanda.empresa}</p>
+                <p className="text-gray-500 text-sm">Vencimiento: {fechaVencimiento.toLocaleDateString()}</p>
+
+                {advertencia && (
+                  <div className="mt-2 bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <ExclamationTriangleIcon className="h-5 w-5" />
+                    <span className="text-sm">{advertencia}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between mt-auto">
+                  <button
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
+                    onClick={() => handleEdit(demanda)}
+                  >
+                    <PencilIcon className="h-5 w-5" /> Editar
+                  </button>
+                  <button
+                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition duration-300"
+                    onClick={() => handleDelete(demanda.id)}
+                  >
+                    <TrashIcon className="h-5 w-5" /> Eliminar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
-      <Link href="/demandas/new" className="self-center">
-        <h3 className="bg-blue-500 text-center text-white w-[200px] mt-2 p-2 rounded-lg hover:bg-blue-600 mt-6">
-          Crear nueva demanda
-        </h3>
+
+      <Link href="/demandas/new">
+        <button className="mt-6 bg-green-600 text-white text-lg px-6 py-3 rounded-lg shadow-md hover:bg-green-700 transition duration-300">
+          + Crear Nueva Demanda
+        </button>
       </Link>
-      {/* Modal de edición */}
+
       {isModalOpen && selectedDemanda && (
-        <ModalDemandaUsuario
-          demanda={selectedDemanda}
-          closeModal={() => setIsModalOpen(false)} // Cerrar modal
-        />
+        <ModalDemandaUsuario demanda={selectedDemanda} closeModal={() => setIsModalOpen(false)} />
       )}
     </div>
   );
