@@ -3,7 +3,9 @@ import { createClient } from '@/utils/supabase/client';
 import nodemailer from 'nodemailer';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("🚀 API Notificaciones ha sido llamada");  // <-- Agregar log
   if (req.method !== 'GET') {
+    console.log("❌ Método no permitido:", req.method);
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
@@ -14,6 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
   const supabase = createClient();
+  console.log("✅ Conexión con Supabase establecida");
+  
   const { data: demandas, error } = await supabase
     .from('demandas')
     .select('id, detalle, fecha_vencimiento, email_contacto')
@@ -53,5 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  console.log("✅ Demandas obtenidas:", demandas.length);
   return res.status(200).json({ message: 'Correos enviados con éxito' });
 }
