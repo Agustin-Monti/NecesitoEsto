@@ -1,1 +1,10 @@
+{
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/notificaciones",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}
 
