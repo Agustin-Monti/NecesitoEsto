@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/client';
 import nodemailer from 'nodemailer';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log("🚀 API Notificaciones ha sido llamada");  // <-- Agregar log
+  console.log("🚀 API Notificaciones ha sido llamada Correctamente.");  // <-- Agregar log
   if (req.method !== 'GET') {
     console.log("❌ Método no permitido:", req.method);
     return res.status(405).json({ message: 'Método no permitido' });
