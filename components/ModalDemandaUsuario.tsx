@@ -104,7 +104,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
             <label className="block font-medium">Detalle:</label>
             <input
               type="text"
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded bg-white"
               value={detalle}
               onChange={(e) => setDetalle(e.target.value)}
               placeholder="Detalle"
@@ -117,7 +117,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
               <label className="block font-medium">Empresa:</label>
               <input
                 type="text"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={empresa}
                 onChange={(e) => setEmpresa(e.target.value)}
                 placeholder="Empresa"
@@ -128,7 +128,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
               <label className="block font-medium">Teléfono:</label>
               <input
                 type="text"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="Teléfono"
@@ -141,7 +141,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
             <div>
               <label className="block font-medium">País:</label>
               <select
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={pais}
                 onChange={(e) => setPais(e.target.value)}
               >
@@ -157,7 +157,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
             <div>
               <label className="block font-medium">Categoría:</label>
               <select
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
               >
@@ -173,7 +173,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
             <div>
               <label className="block font-medium">Rubro:</label>
               <select
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={rubro}
                 onChange={(e) => setRubro(e.target.value)}
               >
@@ -193,7 +193,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
               <label className="block font-medium">Fecha Inicio:</label>
               <input
                 type="date"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={fecha_inicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
               />
@@ -203,7 +203,7 @@ const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, clos
               <label className="block font-medium">Fecha Vencimiento:</label>
               <input
                 type="date"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={fecha_vencimiento}
                 onChange={(e) => setFechaVencimiento(e.target.value)}
               />
