@@ -167,7 +167,7 @@ export default function CreateDemandPage(){
   return (
     <>
       <form
-        className="flex flex-col max-w-3xl mx-auto"
+        className="flex flex-col max-w-3xl mx-auto mt-20"
         method="post"
       >
         {/*<h1 className="text-2xl font-medium">Crear una Demanda</h1>*/}
@@ -191,7 +191,7 @@ export default function CreateDemandPage(){
             required
             value={demand.pais_id} 
             onChange={handleChange}
-            className="border p-2 rounded mb-2 border-solid border-slate-950"
+            className="border p-2 rounded mb-2 border-solid border-slate-950 bg-white"
           >
             <option value="" disabled>Selecciona un Pais</option>
             {paises.map((pais) => (
