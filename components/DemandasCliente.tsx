@@ -7,7 +7,6 @@ import Search from './ui/search';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
-
 interface DemandasClienteProps {
   demandas: any[];
   userId: string | null;
@@ -22,6 +21,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
   const [rubroSeleccionado, setRubroSeleccionado] = useState('');
   const [rubros, setRubros] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const searchParams = useSearchParams();
 
   const abrirModal = (demanda: any) => {
@@ -34,37 +34,32 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     setDemandaSeleccionada(null);
   };
 
-  // Lógica para cambiar la categoría y obtener los rubros asociados
   const handleCategoriaChange = async (idCategoria: string) => {
     setCategoriaSeleccionada(idCategoria);
-    setRubroSeleccionado(''); // Reiniciar rubro cuando cambia la categoría
+    setRubroSeleccionado('');
 
     try {
-      // Filtrar demandas solo por la categoría seleccionada
       const demandasFiltradas = idCategoria
         ? await getDemandasByCategoria(idCategoria)
         : demandas;
 
       setFilteredDemandas(demandasFiltradas);
-      setRubros(await getRubrosByCategoria(idCategoria)); // Cargar rubros al seleccionar una categoría
+      setRubros(await getRubrosByCategoria(idCategoria));
     } catch (error) {
       console.error('Error al filtrar por categoría:', error);
     }
   };
 
-  // Lógica para cambiar el rubro y obtener las demandas filtradas por rubro
   const handleRubroChange = async (idRubro: string) => {
     setRubroSeleccionado(idRubro);
 
     try {
-      let demandasFiltradas = [...demandas];  // Usamos las demandas iniciales
+      let demandasFiltradas = [...demandas];
 
       if (idRubro) {
-        // Si se ha seleccionado un rubro, obtenemos las demandas solo por ese rubro
         demandasFiltradas = await getDemandasByRubro(idRubro);
       }
 
-      // Si no se ha seleccionado rubro, se muestran todas las demandas de la categoría seleccionada
       if (!idRubro && categoriaSeleccionada) {
         demandasFiltradas = demandasFiltradas.filter((demanda) =>
           demanda.categorias?.id === categoriaSeleccionada
@@ -77,25 +72,21 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     }
   };
 
-  // Efecto para aplicar el filtro de búsqueda
   useEffect(() => {
     let demandasFiltradas = demandas;
 
-    // Filtrar por búsqueda
     if (searchQuery) {
       demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.detalle.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Filtrar por categoría (si no se ha seleccionado rubro)
     if (categoriaSeleccionada && !rubroSeleccionado) {
       demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.categorias?.id === categoriaSeleccionada
       );
     }
 
-    // Filtrar por rubro (si se ha seleccionado rubro)
     if (rubroSeleccionado) {
       demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.rubros?.id === rubroSeleccionado
@@ -105,21 +96,26 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     setFilteredDemandas(demandasFiltradas);
   }, [searchQuery, categoriaSeleccionada, rubroSeleccionado, demandas]);
 
-
-  // Función para reiniciar todos los filtros
   const resetFilters = () => {
     setCategoriaSeleccionada('');
     setRubroSeleccionado('');
     setSearchQuery('');
-    setFilteredDemandas(demandas);  // Mostrar todas las demandas sin filtros
+    setFilteredDemandas(demandas);
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 mt-[6rem] lg:mt-40"> {/* Margen superior en móvil y desktop */}
+      {/* Botón para mostrar/ocultar filtros en móvil */}
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        className="lg:hidden w-full py-2 px-4 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 focus:outline-none mb-4 mt-5"
+      >
+        {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+      </button>
+
       {/* Filtros */}
-      <div className="flex items-center justify-between gap-6 mb-6">
-        <div className="w-1/3">
-          {/* Filtro de Categorías */}
+      <div className={`${showFilters ? 'block' : 'hidden'} lg:flex lg:items-center lg:justify-between gap-6 mb-6`}>
+        <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <select
             onChange={(e) => handleCategoriaChange(e.target.value)}
             value={categoriaSeleccionada}
@@ -134,8 +130,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
           </select>
         </div>
 
-        <div className="w-1/3">
-          {/* Filtro de Rubros */}
+        <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <select
             onChange={(e) => handleRubroChange(e.target.value)}
             value={rubroSeleccionado}
@@ -150,19 +145,17 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
           </select>
         </div>
 
-        <div className="w-1/3">
-          {/* Filtro de búsqueda */}
+        <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Search
             placeholder="Buscar Necesidades..."
             handleSearch={setSearchQuery}
           />
         </div>
 
-        <div>
-          {/* Botón para reiniciar los filtros */}
+        <div className="w-full lg:w-auto">
           <button
             onClick={resetFilters}
-            className="ml-4 py-2 px-4 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none"
+            className="w-full lg:w-auto py-2 px-4 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none"
           >
             Reiniciar Filtros
           </button>
@@ -180,14 +173,14 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold truncate">{demanda.detalle}</h3>
                 {demanda.pais && demanda.pais.bandera_url && (
-                    <Image
-                      src={demanda.pais.bandera_url}
-                      alt={`Bandera de ${demanda.pais.nombre}`}
-                      width={20} // Tamaño ajustado
-                      height={12} // Tamaño ajustado
-                      className="ml-2"
+                  <Image
+                    src={demanda.pais.bandera_url}
+                    alt={`Bandera de ${demanda.pais.nombre}`}
+                    width={20}
+                    height={12}
+                    className="ml-2"
                   />
-                  )}
+                )}
               </div>
               <p className="text-gray-700 mt-2">
                 <strong>Categoría:&nbsp;</strong> {demanda.categorias?.categoria || 'Sin categoría'}
@@ -215,21 +208,19 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
                 })()}
               </p>
 
-              {/* Truncado elegante de la información adicional */}
+              {/* Botón "Saber más" con estilos mejorados */}
               <div className="mt-4">
                 <div className="flex items-center justify-center mt-auto">
                   <span className="flex-grow border-t border-gray-300 mr-2"></span>
                   <button
                     onClick={() => abrirModal(demanda)}
-                    className="text-blue-500 font-medium px-2 transition-colors duration-300 hover:text-white hover:bg-blue-500 hover:shadow-md"
-                    aria-label={`Ver más sobre ${demanda.detalle}`}
+                    className="py-2 px-6 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 focus:outline-none transition-colors duration-300"
                   >
                     Saber más
                   </button>
                   <span className="flex-grow border-t border-gray-300 ml-2"></span>
                 </div>
               </div>
-
             </div>
           ))
         ) : (
@@ -242,8 +233,3 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     </div>
   );
 }
-
-
-
-
-
