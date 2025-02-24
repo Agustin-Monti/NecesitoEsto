@@ -49,7 +49,7 @@ export default async function AuthButton({ user }: { user: any }) {
 
   return user ? (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex flex-col items-center p-2">
+      <DropdownMenuTrigger className="flex flex-col items-center cursor-pointer">
         <UserIcon className="h-6 w-6 text-black" />
         <span className="hidden xl:block text-sm">Perfil</span>
       </DropdownMenuTrigger>
@@ -82,4 +82,3 @@ export default async function AuthButton({ user }: { user: any }) {
     </div>
   );
 }
-
