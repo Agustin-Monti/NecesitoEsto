@@ -94,6 +94,8 @@ export default function CreateDemandPage(){
         setDemand((prev: any) => ({
           ...prev,
           profile_id: user.id, // Asocia la demanda al usuario actual
+          responsable_solicitud: profileData?.nombre || "",
+          email_contacto: profileData?.email || "",
         }));
       }
 
@@ -143,11 +145,13 @@ export default function CreateDemandPage(){
   ) => {
     const { name, value } = e.target;
   
-    setDemand({
-      ...demand,
-      [name]: name === "id_categoria" || name === "pais_id" ? parseInt(value) : value, // Convert id_categoria to an integer
-    });
+    setDemand((prev: Demand) => ({
+      ...prev,
+      [name]: name === "id_categoria" || name === "pais_id" ? parseInt(value) : value,
+    }));
   };
+  
+  
 
   const handleDemandChange = (key: keyof Demand, value: any) => {
     setDemand((prev: Demand) => ({
