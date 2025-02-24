@@ -39,7 +39,7 @@ export default function Hero() {
           ¡El Momento es Ahora!
         </h1>
         <p className="text-sm md:text-lg max-w-2xl mx-auto mb-4">
-          Publica lo que estás necesitando y encuentra la mejor solución. NecesitoEsto te ayudara a que conozcan tu demanda!!
+          Publica lo que estás necesitando y encuentra la mejor solución. Necesito Esto te ayudara a que conozcan tu demanda!!
         </p>
 
         {/* Flechas animadas en móvil (más pequeñas y desplazadas) */}
