@@ -1,118 +1,233 @@
-// components/ModalDemandaUsuario.tsx
-
-import React, { useState } from "react";
-import { updateDemanda } from "@/actions/demanda-actions"; // Función para actualizar demanda
+import React, { useState, useEffect } from "react";
+import { getPaises, getCategorias, getRubros, updateDemanda } from "@/actions/demanda-actions";
 
 export interface Demanda {
   id: number;
   detalle: string;
-  rubro_demanda: string;
+  rubro_id: string;
   empresa: string;
   telefono: string;
-  fecha_inicio: Date;
-  fecha_vencimiento: Date;
+  pais_id: string;
+  id_categoria: string;
+  fecha_inicio: string;
+  fecha_vencimiento: string;
 }
 
-interface ModalProps {
+interface ModalDemandaUsuarioProps {
   demanda: Demanda;
   closeModal: () => void;
 }
 
-const ModalDemandaUsuario: React.FC<ModalProps> = ({ demanda, closeModal }) => {
+const ModalDemandaUsuario: React.FC<ModalDemandaUsuarioProps> = ({ demanda, closeModal }) => {
   const [detalle, setDetalle] = useState(demanda.detalle);
-  const [rubro_demanda, setRubro] = useState(demanda.rubro_demanda);
   const [empresa, setEmpresa] = useState(demanda.empresa);
   const [telefono, setTelefono] = useState(demanda.telefono);
-  const [fechaInicio, setFechaInicio] = useState(demanda.fecha_inicio.toString().slice(0, 10)); // Formatear a yyyy-MM-dd
-  const [fechaVencimiento, setFechaVencimiento] = useState(demanda.fecha_vencimiento.toString().slice(0, 10));
+  const [fecha_inicio, setFechaInicio] = useState(demanda.fecha_inicio);
+  const [fecha_vencimiento, setFechaVencimiento] = useState(demanda.fecha_vencimiento);
+  const [pais, setPais] = useState<string>(demanda.pais_id || "");
+  const [categoria, setCategoria] = useState<string>(demanda.id_categoria || "");
+  const [rubro, setRubro] = useState<string>(demanda.rubro_id || "");
+  const [paises, setPaises] = useState<{ id: string; nombre: string }[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string; categoria: string }[]>([]);
+  const [rubros, setRubros] = useState<{ id: string; nombre: string }[]>([]);
+  const [mensajeExito, setMensajeExito] = useState("");
 
-  const handleSave = async () => {
-    const updatedDemanda = { ...demanda, detalle, rubro_demanda, empresa, telefono, fecha_inicio: new Date(fechaInicio), fecha_vencimiento: new Date(fechaVencimiento) };
-    await updateDemanda(updatedDemanda); // Actualizar la demanda
-    closeModal(); // Cerrar el modal
+
+  useEffect(() => {
+    async function fetchData() {
+      const paisesData = await getPaises();
+      const categoriasData = await getCategorias();
+      const rubrosData = await getRubros();
+
+      setPaises(paisesData);
+      setCategorias(categoriasData);
+      setRubros(rubrosData);
+    }
+
+    fetchData();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    // Validar si los campos clave están vacíos
+    if (!pais || !categoria || !rubro) {
+      alert("Por favor, selecciona todos los campos requeridos.");
+      return; // No continuar si algún campo está vacío
+    }
+  
+    const updatedDemanda: Demanda = {
+      id: demanda.id,
+      detalle,
+      empresa,
+      telefono,
+      fecha_inicio,
+      fecha_vencimiento,
+      pais_id: pais,
+      id_categoria: categoria,
+      rubro_id: rubro,
+    };
+  
+    try {
+      await updateDemanda(updatedDemanda);
+  
+      // Mostrar mensaje de éxito
+      setMensajeExito("Editado correctamente");
+  
+      // Esperar 2 segundos antes de cerrar el modal
+      setTimeout(() => {
+        setMensajeExito("");
+        closeModal(); // Cerrar el modal después de mostrar el mensaje
+      }, 2000);
+    } catch (error) {
+      console.error("Error al actualizar la demanda:", error);
+    }
   };
+  
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="bg-white p-8 max-w-3xl w-full relative">
-        <h2 className="text-2xl font-bold mb-4 text-black">Editar Demanda</h2>
-        <div className="mb-4">
-          <label htmlFor="detalle" className="block text-sm font-medium text-black">Detalle</label>
-          <input
-            id="detalle"
-            type="text"
-            value={detalle}
-            onChange={(e) => setDetalle(e.target.value)}
-            className="mt-2 p-2 border border-slate-950 rounded-lg w-full"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="rubro" className="block text-sm font-medium text-black">Rubro</label>
-          <input
-            id="rubro"
-            type="text"
-            value={rubro_demanda}
-            onChange={(e) => setRubro(e.target.value)}
-            className="mt-2 p-2 border border-slate-950 rounded-lg w-full"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="empresa" className="block text-sm font-medium text-black">Empresa</label>
-          <input
-            id="empresa"
-            type="text"
-            value={empresa}
-            onChange={(e) => setEmpresa(e.target.value)}
-            className="mt-2 p-2 border border-slate-950 rounded-lg w-full"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="telefono" className="block text-sm font-medium text-black">Telefono</label>
-          <input
-            id="telefono"
-            type="text"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            className="mt-2 p-2 border border-slate-950 rounded-lg rounded w-full"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="fecha_inicio" className="block text-sm font-medium text-black">Fecha de Inicio</label>
-          <input
-            id="fecha_inicio"
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-            className="mt-2 p-2 border border-slate-950 rounded-lg rounded w-full"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="fecha_vencimiento" className="block text-sm font-medium text-black">Fecha de Vencimiento</label>
-          <input
-            id="fecha_vencimiento"
-            type="date"
-            value={fechaVencimiento}
-            onChange={(e) => setFechaVencimiento(e.target.value)}
-            className="mt-2 p-2 border border-slate-950 rounded-lg rounded w-full"
-          />
-        </div>
-        <div className="flex justify-between">
-          <button
-            onClick={closeModal}
-            className="bg-gray-400 text-white py-2 px-4 rounded"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            className="bg-blue-600 text-white py-2 px-4 rounded"
-          >
-            Guardar
-          </button>
-        </div>
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm p-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-3xl w-full sm:w-[90%] md:w-[80%] max-h-screen overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Editar Demanda</h2>
+
+
+        {/* Mensaje de éxito */}
+        {mensajeExito && (
+          <div className="bg-green-100 text-green-800 p-2 rounded mb-4 text-center">
+            {mensajeExito}
+          </div>
+        )}
+  
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Detalle - Ocupa toda la fila */}
+          <div>
+            <label className="block font-medium">Detalle:</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded"
+              value={detalle}
+              onChange={(e) => setDetalle(e.target.value)}
+              placeholder="Detalle"
+            />
+          </div>
+  
+          {/* Empresa y Teléfono */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-medium">Empresa:</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded"
+                value={empresa}
+                onChange={(e) => setEmpresa(e.target.value)}
+                placeholder="Empresa"
+              />
+            </div>
+  
+            <div>
+              <label className="block font-medium">Teléfono:</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="Teléfono"
+              />
+            </div>
+          </div>
+  
+          {/* País, Categoría y Rubro */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-medium">País:</label>
+              <select
+                className="w-full p-2 border rounded"
+                value={pais}
+                onChange={(e) => setPais(e.target.value)}
+              >
+                <option value="">Selecciona un País</option>
+                {paises.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+  
+            <div>
+              <label className="block font-medium">Categoría:</label>
+              <select
+                className="w-full p-2 border rounded"
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+              >
+                <option value="">Selecciona una Categoría</option>
+                {categorias.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.categoria}
+                  </option>
+                ))}
+              </select>
+            </div>
+  
+            <div>
+              <label className="block font-medium">Rubro:</label>
+              <select
+                className="w-full p-2 border rounded"
+                value={rubro}
+                onChange={(e) => setRubro(e.target.value)}
+              >
+                <option value="">Selecciona un Rubro</option>
+                {rubros.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+  
+          {/* Fechas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-medium">Fecha Inicio:</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                value={fecha_inicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+              />
+            </div>
+  
+            <div>
+              <label className="block font-medium">Fecha Vencimiento:</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                value={fecha_vencimiento}
+                onChange={(e) => setFechaVencimiento(e.target.value)}
+              />
+            </div>
+          </div>
+  
+          {/* Botones */}
+          <div className="flex flex-col sm:flex-row justify-between gap-2 mt-4">
+            <button
+              type="button"
+              className="px-4 py-2 bg-gray-400 text-white rounded w-full sm:w-auto"
+              onClick={closeModal}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded w-full sm:w-auto">
+              Guardar
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
+  
 };
 
 export default ModalDemandaUsuario;
