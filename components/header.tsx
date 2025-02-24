@@ -104,10 +104,8 @@ export const Header = ({ user }: { user: any }) => {
               </Link>
             </li>
             <li className="flex flex-col items-center cursor-pointer">
-              {!hasEnvVars ? <EnvVarWarning /> : <AuthModal />}
+              {!hasEnvVars ? <EnvVarWarning /> : user ? <HeaderAuth user={user} /> : <AuthModal />}
             </li>
-
-
           </ul>
         </nav>
       </div>
