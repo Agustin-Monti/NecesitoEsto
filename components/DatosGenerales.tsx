@@ -91,7 +91,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.nombre}
             onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -102,7 +102,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.apellido}
             onChange={(e) => setProfile({ ...profile, apellido: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -113,7 +113,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.provincia}
             onChange={(e) => setProfile({ ...profile, provincia: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -124,7 +124,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.municipio}
             onChange={(e) => setProfile({ ...profile, municipio: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -135,7 +135,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.localidad}
             onChange={(e) => setProfile({ ...profile, localidad: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -146,7 +146,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.direccion}
             onChange={(e) => setProfile({ ...profile, direccion: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -157,7 +157,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.codigo_postal}
             onChange={(e) => setProfile({ ...profile, codigo_postal: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
 
@@ -168,7 +168,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.telefono}
             onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
           />
         </div>
       </div>
