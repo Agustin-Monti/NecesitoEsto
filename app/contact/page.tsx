@@ -60,7 +60,7 @@ const ContactPage = () => {
             name="nombre"
             value={formData.nombre}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2"
+            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2 bg-white"
             required
           />
         </div>
@@ -71,7 +71,7 @@ const ContactPage = () => {
             name="apellido"
             value={formData.apellido}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2"
+            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2 bg-white"
           />
         </div>
         <div className="mb-4">
@@ -81,7 +81,7 @@ const ContactPage = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2"
+            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2 bg-white"
             required
           />
         </div>
@@ -92,7 +92,7 @@ const ContactPage = () => {
             name="motivo"
             value={formData.motivo}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2"
+            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2 bg-white"
             required
           />
         </div>
@@ -102,7 +102,7 @@ const ContactPage = () => {
             name="mensaje"
             value={formData.mensaje}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2"
+            className="mt-1 block w-full rounded-md border-b-2 border-slate-950 p-2 bg-white"
             rows={4}
             required
           ></textarea>
