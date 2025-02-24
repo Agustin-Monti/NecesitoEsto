@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { fetchDemandas } from '@/actions/demanda-actions'; // Ajusta la ruta a tu función
+import { fetchDemandas, deleteDemanda  } from '@/actions/demanda-actions'; // Ajusta la ruta a tu función
 import  ModalDemandaUsuario  from '@/components/ModalDemandaUsuario'; // Ajusta la ruta a tu función
 import Link from 'next/link';
+import Swal from "sweetalert2"; // Importamos SweetAlert2
 import { PencilIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid'; // Asegúrate de importar los íconos
 
 const DemandaUsuario = ({ userId }: { userId: string }) => {
@@ -24,12 +25,53 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
     setIsModalOpen(true);
   };
 
+  // Recargar las demandas después de la edición o eliminación
+  const reloadDemandas = async () => {
+    const data = await fetchDemandas(userId);
+    setDemandas(data);
+  };
+
   const handleDelete = async (demandaId: string) => {
-    // Lógica para eliminar demanda (esto debería hacerse en Supabase)
+    // Mostrar alerta de confirmación
+    const result = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción ocultará la demanda, pero no eliminará los pagos asociados.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+  
+    // Si el usuario confirma, proceder con la eliminación
+    if (result.isConfirmed) {
+      const success = await deleteDemanda(demandaId); // Llamamos a la función para cambiar el estado
+  
+      if (success) {
+        // Mostrar mensaje de éxito
+        Swal.fire({
+          title: "Eliminado",
+          text: "La demanda ha sido eliminada correctamente.",
+          icon: "success",
+          timer: 2000,
+        });
+  
+        // Recargar la lista de demandas
+        reloadDemandas();
+      } else {
+        // Mostrar mensaje de error si hubo un problema
+        Swal.fire({
+          title: "Error",
+          text: "Hubo un problema al eliminar la demanda. Intenta de nuevo.",
+          icon: "error",
+        });
+      }
+    }
   };
 
   return (
-    <div className="flex flex-col items-center pb-5">
+    <div className="flex flex-col items-center pb-5 mt-10">
       <h2 className="text-3xl font-bold text-gray-800 mb-6">Mis Demandas</h2>
 
       {demandas.length === 0 ? (
@@ -90,7 +132,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
       </Link>
 
       {isModalOpen && selectedDemanda && (
-        <ModalDemandaUsuario demanda={selectedDemanda} closeModal={() => setIsModalOpen(false)} />
+        <ModalDemandaUsuario demanda={selectedDemanda} closeModal={() => { setIsModalOpen(false); reloadDemandas(); }} />
       )}
     </div>
   );
