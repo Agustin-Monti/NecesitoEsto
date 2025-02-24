@@ -4,10 +4,7 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
-import { Demanda } from "@/components/ModalDemandaUsuario";
-
-
-
+import { Demanda } from "@/components/ModalDemandaUsuario"; // Asegúrate de la ruta correcta
 
 
 export const createDemandAction = async (formData: FormData) => {
@@ -94,9 +91,6 @@ export const createDemandAction = async (formData: FormData) => {
     );
   }
 };
-
-
-
 
 
 export const getUserDemandas = async () => {
@@ -221,8 +215,14 @@ export const fetchDemandas = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from("demandas")
-      .select("*")
-      .eq("profile_id", userId); // Utiliza el userId recibido en vez de user.id
+      .select(`
+        id, empresa, responsable_solicitud, email_contacto, telefono, fecha_inicio, fecha_vencimiento, detalle, 
+        pais (nombre, bandera_url), 
+        categorias (id, categoria), 
+        rubros (id, nombre)
+      `)
+      .eq("profile_id", userId) 
+      .eq("status", true); // Solo obtener demandas activas
 
     if (error) {
       console.error("Error al obtener demandas:", error.message);
@@ -232,12 +232,10 @@ export const fetchDemandas = async (userId: string) => {
     return data || [];  // Devuelve las demandas obtenidas, o un array vacío si no hay datos
 
   } catch (error) {
-    console.error("Error al obtener demandas:");
+    console.error("Error al obtener demandas:", error);
     return [];
   }
 };
-
-
 
 
 export const updateDemanda = async (demanda: Demanda) => {
@@ -245,7 +243,16 @@ export const updateDemanda = async (demanda: Demanda) => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("demandas")
-      .update({ detalle: demanda.detalle, rubro_demanda: demanda.rubro_demanda, empresa:demanda.empresa, telefono:demanda.telefono, fecha_inicio:demanda.fecha_inicio, fecha_vencimiento:demanda.fecha_vencimiento })
+      .update({
+        detalle: demanda.detalle,
+        empresa: demanda.empresa,
+        telefono: demanda.telefono,
+        fecha_inicio: demanda.fecha_inicio,
+        fecha_vencimiento: demanda.fecha_vencimiento,
+        pais_id: demanda.pais_id,
+        id_categoria: demanda.id_categoria,
+        rubro_id: demanda.rubro_id
+      })
       .eq("id", demanda.id);
 
     if (error) {
@@ -262,28 +269,32 @@ export const updateDemanda = async (demanda: Demanda) => {
 
 
 
-
 // Delete function
 
-
-
-export async function deleteDemanda(id: string) {
+export const deleteDemanda = async (demandaId: string) => {
   const supabase = await createClient();
-  console.log("Intentando borrar demanda con ID:", id);
 
-  const { error } = await supabase
-    .from("demandas")
-    .delete()
-    .eq("id", id); // Filtra por el id de la demanda
+  try {
+    const { error } = await supabase
+      .from("demandas")
+      .update({ status: false }) // Cambiamos el status a false en lugar de eliminar
+      .eq("id", demandaId);
 
-  if (error) {
-    console.error("Error al borrar la demanda:", error);
-    throw new Error("Error al borrar la demanda: " + error.message);
+    if (error) {
+      console.error("Error al eliminar la demanda:", error.message);
+      return false;
+    }
+
+    return true; // Éxito
+  } catch (error) {
+    console.error("Error inesperado al eliminar la demanda:", error);
+    return false;
   }
+};
 
-  console.log("Demanda borrada correctamente:", id);
-  return { success: true, message: "Demanda borrada correctamente." };
-}
+
+
+
 
 export async function getDemandasByCategoria(idCategoria: string) {
   const supabase = await createClient();
