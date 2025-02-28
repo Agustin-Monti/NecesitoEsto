@@ -26,7 +26,7 @@ export default function Pasos() {
   return (
     <section className="text-center py-20"> {/* Sección más grande con padding */}
       <h2 className="text-3xl font-semibold text-gray-800 mb-6"> {/* Título más grande */}
-        CUAL ES EL FUNCIONAMIENTO DE  "NECESITO<span className="text-blue-700">ESTO!</span>"?
+        CUAL ES EL FUNCIONAMIENTO DE  "NECESITO <span className="text-blue-700">ESTO!</span>"?
       </h2>
       <p className="text-gray-600 mb-12"> {/* Más espacio entre párrafos */}
         Detalla tu demanda de forma clara y precisa para que las personas interesadas puedan contactarse en forma directa y acercar una propuesta que sea la solución que estás buscando.
