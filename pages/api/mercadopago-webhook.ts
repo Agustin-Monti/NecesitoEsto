@@ -106,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             text: `
               Hola,
 
-              El pago para la demanda con ID: ${demandaData.detalle} ha sido aprobado con éxito. Aquí están los detalles:
+              El pago para la demanda: ${demandaData.detalle} ha sido aprobado con éxito. Aquí están los detalles:
 
               - Empresa: ${demandaData.empresa}
               - Responsable: ${demandaData.responsable_solicitud}
