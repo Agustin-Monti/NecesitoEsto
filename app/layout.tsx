@@ -44,7 +44,7 @@ export default function RootLayout({
             </div>
 
             <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16 bg-gray-400">
-              <p className="h2 text-white text-xl">Nesecito<span className='azul'>!Esto</span> © Copyright - 2024</p>
+              <p className="h2 text-white text-xl">Necesito<span className='azul'>!Esto</span> © Copyright - 2024</p>
               {/*<ThemeSwitcher />*/}
               <Image src="/logotm2.png" alt="Logo de Necesito Esto!" width={170} height={90} />
             </footer>
