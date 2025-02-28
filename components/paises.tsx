@@ -20,7 +20,7 @@ export default function Table({ paises }: { paises: Categoria[] }) {
     <section className="py-12 w-full flex justify-center">
         <div className="w-full max-w-screen-xl text-center">
             <h2 className="text-3xl font-bold mb-8">
-            Necesito<span className="azul">!Esto</span> también en otros países
+            Necesito <span className="azul">!Esto</span> también en otros países
             </h2>
             <div className="flex flex-wrap justify-center gap-8">
             {paises.map((paises) => (
