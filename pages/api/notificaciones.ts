@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: demanda.email_contacto,
-      subject: 'Tu demanda está por vencer',
+      subject: 'Tu demanda está por vencer.',
       text: `Hola, tu demanda "${demanda.detalle}" está por vencer en 2 días. Te recomendamos renovar la fecha para que siga activa y aparezca en el portal demandas, puedes editar la fecha o bien eliminar la demanda si ya no es necesaria.`,
     };
 
