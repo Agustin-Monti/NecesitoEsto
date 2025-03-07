@@ -42,7 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             .from('pagos')
             .select('*')
             .eq('demanda_id', demandaId)
-            .single();
+            .order('fecha_pago', { ascending: false }) // Ordenar por fecha_pago descendente (el más reciente primero)
+            .limit(1); // Tomar solo el más reciente
 
           if (fetchError) {
             console.error('Error buscando el registro de pago:', fetchError);
@@ -53,6 +54,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log('No se encontró un registro con demanda_id:', demandaId);
             return res.status(404).json({ message: 'Registro de pago no encontrado.' });
           }
+
+          // Obtener el nombre del pagador
+          const nombrePagador = existingPayment?.[0]?.nombre_pagador;
 
           // Actualizar el estado de pago en la tabla "pagos"
           const { error: updateError } = await supabase
@@ -86,6 +90,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(404).json({ message: 'Demanda no encontrada.' });
           }
 
+          // Traer los nombres del rubro y la categoría
+          const { data: rubroData, error: rubroError } = await supabase
+            .from('rubros')
+            .select('nombre')
+            .eq('id', demandaData.rubro_id)
+            .single();
+
+          if (rubroError) {
+            console.error('Error obteniendo el rubro:', rubroError);
+            return res.status(500).json({ message: 'Error obteniendo el rubro.' });
+          }
+
+          const { data: categoriaData, error: categoriaError } = await supabase
+            .from('categorias')
+            .select('categoria')
+            .eq('id', demandaData.id_categoria)
+            .single();
+
+          if (categoriaError) {
+            console.error('Error obteniendo la categoría:', categoriaError);
+            return res.status(500).json({ message: 'Error obteniendo la categoría.' });
+          }
+
           // Configuración de nodemailer
           const transporter = nodemailer.createTransport({
             service: 'gmail', // Puedes usar el servicio que prefieras
@@ -96,31 +123,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
 
           // Obtener el correo del pagador desde los datos de la tabla "pagos"
-          const correoPagador = existingPayment.correo_pagador;  // Asegúrate de que 'correo_pagador' sea el campo correcto
+          const correoPagador = existingPayment?.[0]?.correo_pagador;// Asegúrate de que 'correo_pagador' sea el campo correcto
 
           // Configuración del correo
           const mailOptions = {
             from: process.env.GMAIL_USER,
             to: correoPagador, // Usamos el correo de la demanda
-            subject: `Pago aprobado para la demanda de NesecitoEsto!`,
-            text: `
-              Hola,
+            subject: `Pago aprobado para la demanda de Necesito Esto!`,
+            html: `
+              <p style="font-size: 18px; color: #333; font-weight: bold; background-color: #f0f8ff; padding: 10px; border-radius: 5px;">
+                Hola ${nombrePagador},
+              </p>
 
-              El pago para la demanda: ${demandaData.detalle} ha sido aprobado con éxito. Aquí están los detalles:
+              <p>📌 El pago para la demanda: <strong>${demandaData.detalle}</strong> ha sido aprobado con éxito. Aquí están los detalles:</p>
 
-              - Empresa: ${demandaData.empresa}
-              - Responsable: ${demandaData.responsable_solicitud}
-              - Email: ${demandaData.email_contacto}
-              - Teléfono: ${demandaData.telefono}
-              - Rubro Demanda: ${demandaData.rubro_demanda}
-              - Detalle de la demanda: ${demandaData.detalle}
+              <ul style="list-style-type: none; padding: 0;">
+                <li style="margin: 10px 0;"><strong>🏢 Empresa:</strong> ${demandaData.empresa}</li>
+                <li style="margin: 10px 0;"><strong>👨‍💼 Responsable:</strong> ${demandaData.responsable_solicitud}</li>
+                <li style="margin: 10px 0;"><strong>📧 Email:</strong> ${demandaData.email_contacto}</li>
+                <li style="margin: 10px 0;"><strong>📞 Teléfono:</strong> ${demandaData.telefono}</li>
+                <li style="margin: 10px 0;"><strong>🧩 Rubro Demanda:</strong> ${rubroData?.nombre || "No disponible"}</li>
+                <li style="margin: 10px 0;"><strong>🏷️ Categoría:</strong> ${categoriaData?.categoria || "No disponible"}</li>
+                <li style="margin: 10px 0;"><strong>🔎 Detalle de la demanda:</strong> ${demandaData.detalle}</li>
+              </ul>
 
-              Detalles adicionales:
-              - Monto del pago: $${transaction_amount}
-              - Estado del pago: ${paymentData.status}
+              <p style="font-size: 18px; color: #ff7f50; font-weight: bold;">
+                ¡Gracias por usar nuestros servicios!
+              </p>
 
-
-              Gracias por usar nuestros servicios.
+              <p style="font-size: 20px; color: #333;">
+                Necesito <span style="margin: 10px 0; color: #007bff; font-weight: bold;">Esto!</span>
+              </p>
             `,
           };
 
