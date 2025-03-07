@@ -45,8 +45,46 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [usdToArs] = useState(1200); // USD to ARS rate
   const supabase = createClient();
+  const [demandaGratis, setDemandaGratis] = useState<boolean>(false); // Estado para verificar demanda gratis
+  const [cargando, setCargando] = useState(false);
+  const [alertaVisible, setAlertaVisible] = useState(false);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data, error } = await supabase
+        .from('profile')
+        .select('nombre, email, demanda_gratis') // Agregamos demanda_gratis
+        .single();
+  
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+  
+      if (data) {
+        setNombrePagador(data.nombre || '');
+        setCorreoPagador(data.email || '');
+        setDemandaGratis(data.demanda_gratis || false); // Guardamos si el usuario tiene demanda gratis
+      }
+    };
+  
+    fetchUserProfile();
+  }, [supabase]);
 
 
+  // useEffect to update final price when couponDiscount or precioDemandaUSD changes
+  useEffect(() => {
+    if (couponDiscount > 0) {
+      const newFinalPrice = precioDemandaUSD * (1 - couponDiscount / 100);
+      setFinalPrice(newFinalPrice);
+      console.log("Precio actualizado con cupón:", newFinalPrice);
+    } else {
+      setFinalPrice(precioDemandaUSD);
+    }
+  }, [couponDiscount, precioDemandaUSD]);
+
+  // Calculamos el precio final en ARS
+  const finalPriceArg = (finalPrice * usdToArs).toFixed(0);
 
 
   // Initialize Mercado Pago on component mount
@@ -80,15 +118,15 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
   }, [supabase]);
 
   // Function to create the payment preference on the server
-  const createPreference = async () => {
+  const createPreference = async (price: number) => {
     try {
-      console.log('Demanda to create preference:', {
-        id: demanda.id,
-        detalle: demanda.detalle,
-        precio: finalPrice,
-        nombre_pagador: nombrePagador,
-        correo_pagador: correoPagador,
-      });
+      // console.log('Demanda to create preference:', {
+      //   id: demanda.id,
+      //   detalle: demanda.detalle,
+      //   precio: price,
+      //   nombre_pagador: nombrePagador,
+      //   correo_pagador: correoPagador,
+      // });
 
       // Check that all required data is present
       if (!demanda.id || !demanda.detalle || !nombrePagador || !correoPagador) {
@@ -101,7 +139,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
         id: demanda.id,
         title: demanda.detalle,
         quantity: 1,  // Adjust quantity as needed
-        price: finalPrice,  // Use the actual price of the demanda
+        price: price,  // Use the actual price of the demanda
         nombre_pagador: nombrePagador,
         correo_pagador: correoPagador,
       });
@@ -116,13 +154,19 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
     }
   };
 
-  // Handle payment click and create the preference
+  // Manejo del click de pagar
   const handlePagarClick = async () => {
-    const id = await createPreference();
+    console.log("Precio final en ARS antes de crear preferencia:", finalPriceArg); // Log para ver el precio
+    // Convertimos finalPriceArg de string a number
+    const priceInNumber = parseInt(finalPriceArg, 10);
+    const id = await createPreference(priceInNumber); // Pasamos el precio final en ARS como número
     if (id) {
-      setPreferenceId(id);  // Store the preference ID for Wallet component
+      setPreferenceId(id);
     }
   };
+  
+
+
 
   // Handle the click for showing payment methods
   const handleShowPaymentMethods = () => {
@@ -131,39 +175,43 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
 
   // Manejo del cupón
   const handleCouponChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Evento de cambio detectado:", event.target.value); // ✅ Depuración
+  
     const code = event.target.value;
     setCouponCode(code);
-    console.log("Código del cupón ingresado:", code);
   
     if (!code) {
       setCouponDiscount(0);
-      setFinalPrice(precioDemandaUSD); // Vuelve al precio original si no hay cupón
+      setFinalPrice(precioDemandaUSD);
+      console.log("Precio sin cupón:", precioDemandaUSD);
       return;
     }
   
     try {
       const response = await getCupon(code);
-      console.log("Respuesta del servidor:", response);  // Verifica la respuesta de la API
+  
+      console.log("Respuesta del cupón:", response); // ✅ Verifica si llega la respuesta
   
       if (response.success && response.data) {
         const cupon = response.data;
   
-        // Verifica si el cupón es válido
         if (cupon.activo && cupon.usos_realizados < cupon.usos_maximos && new Date(cupon.fecha_expiracion) > new Date()) {
-          const discount = cupon.descuento / 100;  // Descuento en formato decimal (50% -> 0.5)
-          const newFinalPrice = precioDemandaUSD * (1 - discount);  // Aplica el descuento al precio original
+          const discount = cupon.descuento / 100;
+          const newFinalPrice = precioDemandaUSD * (1 - discount);
   
-          setCouponDiscount(cupon.descuento);  // Establece el descuento
-          setFinalPrice(newFinalPrice);  // Actualiza el precio final
+          setCouponDiscount(cupon.descuento);
+          setFinalPrice(newFinalPrice);
+  
+          console.log(`Precio con cupón aplicado (${cupon.descuento}% de descuento):`, newFinalPrice);
         } else {
-          // Si el cupón no es válido, restablece el precio
           setCouponDiscount(0);
           setFinalPrice(precioDemandaUSD);
+          console.log("Cupón inválido, precio original:", precioDemandaUSD);
         }
       } else {
-        // Si no se encontró el cupón o hay un error, restablece el precio
         setCouponDiscount(0);
         setFinalPrice(precioDemandaUSD);
+        console.log("Cupón no encontrado, precio original:", precioDemandaUSD);
       }
     } catch (error) {
       console.error('Error al validar el cupón:', error);
@@ -173,13 +221,47 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
   };
   
   
+  const manejarDemanda = async () => {
+    setCargando(true); // Activa el estado de carga y cambia el botón
+
+    try {
+      const respuesta = await fetch("/api/envioDemandaGratis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idDemanda: demanda.id,
+          detalle: demanda.detalle,
+          rubroNombre: demanda.rubros?.nombre || "No disponible",
+          categoriaNombre: demanda.categorias?.categoria || "No disponible",
+          nombrePagador,
+          correoPagador,
+        }),
+      });
+
+      if (respuesta.ok) {
+        setAlertaVisible(true);
+
+        // Ocultar la alerta después de 3 segundos
+        setTimeout(() => {
+          setAlertaVisible(false);
+        }, 3000);
+      } else {
+        console.error("Error al procesar la demanda");
+      }
+    } catch (error) {
+      console.error("Error al enviar la demanda:", error);
+    } finally {
+      setCargando(false); // Desactiva el estado de carga después de la petición
+    }
+  };
+  
   
 
   if (!isOpen) return null;  // Do not render the modal if it's not open
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
-  <div className="bg-white p-8 rounded-lg shadow-lg max-w-5xl w-full h-[550px] relative">
+  <div className="bg-white p-8 rounded-lg shadow-lg max-w-5xl w-full h-[650px] relative">
     {/* Botón de cerrar */}
     <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-lg">
       ✕
@@ -250,14 +332,9 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
               type="text" 
               value={couponCode} 
               onChange={handleCouponChange} 
-              className="p-2 border rounded-lg shadow-sm w-2/3 focus:ring-2 focus:ring-blue-500"
-              placeholder="Ingresa tu cupón aquí"
+              className="p-2 border rounded-lg shadow-sm w-2/3 focus:ring-2 focus:ring-blue-500 bg-white"
+              placeholder="Ingresa tu cupón"
             />
-            <button 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              Aplicar
-            </button>
           </div>
         </div>
 
@@ -284,14 +361,31 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
 
 
         {/* Botón para mostrar métodos de pago */}
-        {!showPaymentMethods && (
-          <button
-            className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center"
-            onClick={handleShowPaymentMethods}
-          >
-            Realizar Pago PPO
-          </button>
+        {/* Si el usuario tiene demanda gratis, mostramos el mensaje */}
+        {demandaGratis  ? (
+          <div className="alert alert-success p-4 text-green-700 bg-green-100 rounded-lg mt-10">
+            🎉 ¡Felicidades! Tienes esta demanda gratis. <br />
+            No necesitas pagar nada. <br />
+            <button 
+              className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center mt-3"
+              onClick={manejarDemanda}
+              disabled={cargando} // Deshabilita el botón mientras carga
+            >
+              {cargando ? "Obteniendo Demanda... ⏳" : "Obtener información sobre la demanda"}
+            </button>
+          </div>
+        ) : (
+          // Si no tiene demanda gratis, mostramos los métodos de pago normales
+          !showPaymentMethods && (
+            <button
+              className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center mt-10"
+              onClick={handleShowPaymentMethods}
+            >
+              Realizar Pago PPO
+            </button>
+          )
         )}
+
 
         {/* Métodos de pago */}
         {showPaymentMethods && (
@@ -343,6 +437,17 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
                 }}
               />
             </PayPalScriptProvider>
+          </div>
+        )}
+
+        {/* Mensaje de alerta con efecto de opacidad */}
+        {alertaVisible && (
+          <div
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                      bg-green-600 text-white p-4 rounded-lg text-lg font-bold shadow-lg
+                      transition-opacity duration-500 opacity-100 animate-fadeIn"
+          >
+            ✅ Demanda entregada correctamente.
           </div>
         )}
       </div>
