@@ -130,7 +130,9 @@ export async function getAllDemandas(idCategoria = null) {
     .from("demandas")
     .select(
       "id, empresa, responsable_solicitud, email_contacto, telefono, fecha_inicio, fecha_vencimiento, detalle, pais (nombre, bandera_url), categorias (id, categoria), rubros (id, nombre)"
-    );
+    )
+    .eq("estado", "aprobada") // Filtrar solo las demandas aprobadas
+    .gt("fecha_vencimiento", new Date().toISOString()); // Excluir demandas vencidas
 
   // Filtrar por categoría si se proporciona un `idCategoria`
   if (idCategoria) {
@@ -143,8 +145,6 @@ export async function getAllDemandas(idCategoria = null) {
     console.error("Error fetching demandas:", error);
     return [];
   }
-
-
 
   return demandas;
 }
