@@ -96,6 +96,7 @@ export default function CreateDemandPage(){
           profile_id: user.id, // Asocia la demanda al usuario actual
           responsable_solicitud: profileData?.nombre || "",
           email_contacto: profileData?.email || "",
+          telefono: profileData?.telefono || "",
         }));
       }
 
