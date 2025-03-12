@@ -6,8 +6,12 @@ import { redirect } from "next/navigation";
 
 import { Demanda } from "@/components/ModalDemandaUsuario"; // Asegúrate de la ruta correcta
 
+type CreateDemandResponse = {
+  success: boolean;
+  message: string;
+};
 
-export const createDemandAction = async (demand: any): Promise<{ success: boolean; message: string }> => {
+export const createDemandAction = async (demand: any): Promise<CreateDemandResponse> => {
   const supabase = await createClient();
 
   try {
