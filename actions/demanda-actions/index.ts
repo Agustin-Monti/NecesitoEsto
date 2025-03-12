@@ -7,88 +7,91 @@ import { redirect } from "next/navigation";
 import { Demanda } from "@/components/ModalDemandaUsuario"; // Asegúrate de la ruta correcta
 
 
-export const createDemandAction = async (formData: FormData) => {
+export const createDemandAction = async (demand: any): Promise<{ success: boolean; message: string }> => {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  if (userError) {
-    console.error("Error fetching user:", userError);
-    return encodedRedirect("error", "/update-profile", userError.message);
-  }
-
-  const empresa = formData.get("empresa")?.toString();
-  const responsable_solicitud = formData.get("responsable_solicitud")?.toString();
-  const email_contacto = formData.get("email_contacto")?.toString();
-  const telefono = formData.get("telefono");
-  const fecha_inicio = formData.get("fecha_inicio")?.toString();
-  const fecha_vencimiento = formData.get("fecha_vencimiento")?.toString();
-  const id_categoria = formData.get("id_categoria")?.toString();
-  const detalle = formData.get("detalle")?.toString();
-  const pais_id = formData.get("pais_id")?.toString();
-  const rubro = formData.get("rubro")?.toString(); // Capturamos el rubro
-  const user_id = user?.id;
-
-  let rubro_id;
-
-  // Verificar si el rubro es un ID (si es un número, es un rubro existente)
-  if (isNaN(Number(rubro))) {
-    // Si no es un número, es un rubro nuevo (texto)
-    const { data: newRubro, error: newRubroError } = await supabase
-      .from("rubros")
-      .insert({ nombre: rubro, categoria_id: id_categoria })
-      .select("id")
-      .single();
-
-    if (newRubroError) {
-      console.error("Error creating rubro:", newRubroError);
-      return encodedRedirect("error", "/demandas/new", newRubroError.message);
+    if (userError) {
+      console.error("Error fetching user:", userError);
+      return { success: false, message: userError.message };
     }
 
-    rubro_id = newRubro.id; // Asignamos el ID del nuevo rubro
-  } else {
-    // Si es un número, buscamos el rubro existente
-    const { data: existingRubro, error: rubroError } = await supabase
-      .from("rubros")
-      .select("id")
-      .eq("id", rubro)
-      .single();
+    const {
+      empresa,
+      responsable_solicitud,
+      email_contacto,
+      telefono,
+      fecha_inicio,
+      fecha_vencimiento,
+      id_categoria,
+      detalle,
+      pais_id,
+      rubro,
+    } = demand;
 
-    if (rubroError) {
-      console.error("Error fetching rubro:", rubroError);
-      return encodedRedirect("error", "/demandas/new", rubroError.message);
+    const user_id = user?.id;
+
+    let rubro_id;
+
+    // Verificar si el rubro es un ID o un texto nuevo
+    if (isNaN(Number(rubro))) {
+      const { data: newRubro, error: newRubroError } = await supabase
+        .from("rubros")
+        .insert({ nombre: rubro, categoria_id: id_categoria })
+        .select("id")
+        .single();
+
+      if (newRubroError) {
+        console.error("Error creating rubro:", newRubroError);
+        return { success: false, message: newRubroError.message };
+      }
+
+      rubro_id = newRubro.id;
+    } else {
+      const { data: existingRubro, error: rubroError } = await supabase
+        .from("rubros")
+        .select("id")
+        .eq("id", rubro)
+        .single();
+
+      if (rubroError) {
+        console.error("Error fetching rubro:", rubroError);
+        return { success: false, message: rubroError.message };
+      }
+
+      rubro_id = existingRubro.id;
     }
 
-    rubro_id = existingRubro.id; // Usamos el ID del rubro existente
-  }
+    // Insertar la demanda con el rubro_id
+    const { data, error: demandaError } = await supabase.from("demandas").insert({
+      empresa,
+      responsable_solicitud,
+      email_contacto,
+      telefono,
+      fecha_inicio,
+      fecha_vencimiento,
+      id_categoria,
+      pais_id,
+      detalle,
+      profile_id: user_id,
+      rubro_id,
+      estado: "pendiente",
+    });
 
-  // Registrar la demanda con el rubro_id
-  const { data, error: demandaError } = await supabase.from("demandas").insert({
-    empresa,
-    responsable_solicitud,
-    email_contacto,
-    telefono,
-    fecha_inicio,
-    fecha_vencimiento,
-    id_categoria,
-    pais_id,
-    detalle,
-    profile_id: user_id,
-    rubro_id, // Guardamos el rubro_id aquí
-  });
+    if (demandaError) {
+      console.error("Error creating demand:", demandaError);
+      return { success: false, message: demandaError.message };
+    }
 
-  if (demandaError) {
-    console.error(demandaError.code + " " + demandaError.message);
-    return encodedRedirect("error", "/demandas/new", demandaError.message);
-  } else {
-    return encodedRedirect(
-      "success",
-      "/demandas/new",
-      `Demanda creada correctamente.`
-    );
+    return { success: true, message: "Demanda creada correctamente." };
+  } catch (error) {
+    console.error("Error creating demand:", error);
+    return { success: false, message: "Hubo un problema al procesar la solicitud." };
   }
 };
 
