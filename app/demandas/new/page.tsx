@@ -1,6 +1,5 @@
 "use client";
 
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -9,6 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Select from "react-select";
 import { Alert } from "@/components/ui/alert"; // Importa el componente Alert
+
+// Define el tipo de la respuesta
+type CreateDemandResponse = {
+  success: boolean;
+  message: string;
+};
 
 export default function CreateDemandPage() {
   const searchParams = useSearchParams();
@@ -154,7 +159,7 @@ export default function CreateDemandPage() {
     setSuccess(null);
 
     try {
-      const response = await createDemandAction(demand);
+      const response: CreateDemandResponse = await createDemandAction(demand);
       console.log("Respuesta del servidor:", response); // Depuración
 
       if (response.success) {
