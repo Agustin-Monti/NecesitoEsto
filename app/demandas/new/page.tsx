@@ -1,48 +1,23 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { createDemandAction, getCategorias, getPaises, getRubros  } from "@/actions/demanda-actions";
-import { FormMessage, Message } from "@/components/form-message";
-import { SubmitButton } from "@/components/submit-button";
+import { createDemandAction, getCategorias, getPaises, getRubros } from "@/actions/demanda-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Select from "react-select";
+import { Alert } from "@/components/ui/alert"; // Importa el componente Alert
 
-
-
-type Demand = {
-  empresa: string;
-  responsable_solicitud: string;
-  email_contacto: string;
-  telefono: string;
-  fecha_inicio: string;
-  fecha_vencimiento: string;
-  detalle: string;
-  profile_id: string;
-  id_categoria: number;
-  pais_id: number;
-  rubro: string
-};
-
-type Rubro = {
-  id: number;
-  nombre: string;
-};
-
-
-
-// Acción para crear una demanda
-
-export default function CreateDemandPage(){
- {/* searchParams,
-}: {
-  searchParams: Message;
-}) {*/}
+export default function CreateDemandPage() {
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [paises, setPaises] = useState<any[]>([]);
-  const [rubros, setRubros] = useState<Rubro[]>([]);
+  const [rubros, setRubros] = useState<any[]>([]);
   const [demand, setDemand] = useState<any>({
     empresa: "",
     responsable_solicitud: "",
@@ -57,10 +32,25 @@ export default function CreateDemandPage(){
     rubro: "",
   });
   const [loading, setLoading] = useState(true);
-
-  // Para manejar el rubro personalizado
   const [customRubro, setCustomRubro] = useState("");
   const [isCustomRubro, setIsCustomRubro] = useState(false);
+
+  // Depuración: Verifica los cambios en `status` y `success`
+  useEffect(() => {
+    console.log("Estado actualizado:", status, success);
+  }, [status, success]);
+
+  useEffect(() => {
+    if (searchParams) {
+      const statusParam = searchParams.get("status");
+      const successParam = searchParams.get("success");
+
+      if (statusParam && successParam) {
+        setStatus(statusParam);
+        setSuccess(decodeURIComponent(successParam));
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -83,7 +73,7 @@ export default function CreateDemandPage(){
           .from("profile")
           .select("*")
           .eq("id", user.id)
-          .single(); // single() se usa para obtener un solo registro
+          .single();
 
         if (profileError) {
           console.error("Error fetching profile:", profileError);
@@ -93,7 +83,7 @@ export default function CreateDemandPage(){
         setUser(user);
         setDemand((prev: any) => ({
           ...prev,
-          profile_id: user.id, // Asocia la demanda al usuario actual
+          profile_id: user.id,
           responsable_solicitud: profileData?.nombre || "",
           email_contacto: profileData?.email || "",
           telefono: profileData?.telefono || "",
@@ -104,24 +94,31 @@ export default function CreateDemandPage(){
     };
 
     const fetchPaises = async () => {
-      const paisesData = await getPaises();
-      setPaises(paisesData);
-
+      try {
+        const paisesData = await getPaises();
+        setPaises(paisesData);
+      } catch (error) {
+        console.error("Error al obtener países:", error);
+      }
     };
 
     const fetchCategorias = async () => {
-      const categoriasData = await getCategorias();
-      setCategorias(categoriasData);
-
+      try {
+        const categoriasData = await getCategorias();
+        setCategorias(categoriasData);
+      } catch (error) {
+        console.error("Error al obtener categorías:", error);
+      }
     };
 
     const fetchRubros = async () => {
-      const rubrosData = await getRubros();
-      setRubros(rubrosData);
-
+      try {
+        const rubrosData = await getRubros();
+        setRubros(rubrosData);
+      } catch (error) {
+        console.error("Error al obtener rubros:", error);
+      }
     };
-
-    
 
     fetchRubros();
     fetchPaises();
@@ -133,43 +130,87 @@ export default function CreateDemandPage(){
     return <p className="text-2xl font-bold mb-4 text-black text-center">Cargando Formulario de Crear Necesidad...</p>;
   }
 
-  {/*if ("message" in searchParams) {
-    return (
-      <div className="w-full flex-1 flex items-center h-screen sm:max-w-md justify-center gap-2 p-4">
-        <FormMessage message={searchParams} />
-      </div>
-    );
-  }*/}
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-  
-    setDemand((prev: Demand) => ({
+    setDemand((prev: any) => ({
       ...prev,
       [name]: name === "id_categoria" || name === "pais_id" ? parseInt(value) : value,
     }));
   };
-  
-  
 
-  const handleDemandChange = (key: keyof Demand, value: any) => {
-    setDemand((prev: Demand) => ({
+  const handleDemandChange = (key: string, value: any) => {
+    setDemand((prev: any) => ({
       ...prev,
       [key]: value,
     }));
+  };
 
-  
-  
-  
-};
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus(null);
+    setSuccess(null);
+
+    try {
+      const response = await createDemandAction(demand);
+      console.log("Respuesta del servidor:", response); // Depuración
+
+      if (response.success) {
+        setStatus("success");
+        setSuccess(
+          "Su demanda fue creada correctamente y pasará a evaluarse. " +
+          "En unos minutos recibirá un correo electrónico con el resultado de la evaluación."
+        );
+      } else {
+        setStatus("error");
+        setSuccess(response.message || "Error al crear la demanda.");
+      }
+    } catch (error) {
+      setStatus("error");
+      setSuccess("Hubo un problema al procesar la solicitud.");
+      console.error("Error en la solicitud:", error);
+    }
+  };
 
   return (
     <>
+      
+      <div>
+        {status && success && (
+          <Alert
+            variant={status === "success" ? "success" : "destructive"}
+            title={status === "success" ? "Éxito" : "Error"}
+            description={success}
+            onClose={() => {
+              setStatus(null); // Limpia el estado `status`
+              setSuccess(null); // Limpia el estado `success`
+              
+              // Restablece el formulario a su estado inicial
+              setDemand({
+                empresa: "",
+                responsable_solicitud: "",
+                email_contacto: "",
+                telefono: "",
+                fecha_inicio: "",
+                fecha_vencimiento: "",
+                detalle: "",
+                profile_id: user?.id || "", // Mantén el ID del usuario
+                id_categoria: "",
+                pais_id: "",
+                rubro: "",
+              });
+              setCustomRubro(""); // Restablece el rubro personalizado
+              setIsCustomRubro(false); // Restablece el estado de rubro personalizado
+            }}
+          />
+        )}
+      </div>
+
       <form
         className="flex flex-col max-w-3xl mx-auto mt-20"
         method="post"
+        onSubmit={handleSubmit}
       >
         {/*<h1 className="text-2xl font-medium">Crear una Demanda</h1>*/}
         <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
@@ -262,7 +303,7 @@ export default function CreateDemandPage(){
             required
             value={demand.id_categoria} 
             onChange={handleChange}
-            className="border p-2 rounded mb-2 border-solid border-slate-950 bg-white"
+            className="border p-2 rounded mb-2 border-solid border-slate-950"
           >
             <option value="" disabled>Selecciona una categoría</option>
             {categorias.map((categoria) => (
@@ -289,7 +330,7 @@ export default function CreateDemandPage(){
                 handleDemandChange("rubro", selectedOption?.value ?? "");
               }
             }}
-            className="mb-2 border-solid border-slate-950"
+            className="mb-2 border border-solid border-slate-950"
             placeholder="Selecciona un rubro"
           />
 
@@ -303,7 +344,7 @@ export default function CreateDemandPage(){
                 setCustomRubro(e.target.value);
                 handleDemandChange("rubro", e.target.value); // Cambia el valor de rubro
               }}
-              className="border p-2 rounded mb-2 border-solid border-slate-950"
+              className="border p-2 mb-2 border-solid border-slate-950"
             />
           )}
 
@@ -314,36 +355,18 @@ export default function CreateDemandPage(){
           <Label htmlFor="detalle">Detalle</Label>
           <textarea
             name="detalle"
-            placeholder="Describa el detalle de la demanda"
+            placeholder=" Describa el detalle de la demanda"
             required
             value={demand.detalle}
             onChange={handleChange}
-            className="border border-solid border-slate-950 bg-white"
+            className="border border-solid border-slate-950"
             rows={4}
           />
 
-          <SubmitButton
-            className="bg-blue-500 text-white text-center mt-2 mb-4 p-2 rounded-lg hover:bg-blue-600"
-            pendingText="Creando Necesidad..."
-            formAction={async () => {
-              console.log("Datos de la demanda que se enviarán:", demand); 
+        <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4">
+          Crear Demanda
+        </button>
 
-              // Crear un objeto FormData
-              const formData = new FormData();
-              Object.keys(demand).forEach((key) => {
-                formData.append(key, demand[key]);
-              });
-
-              // Llamar a la función con el FormData
-              return createDemandAction(formData);
-            }}
-          >
-            Crear Demanda
-          </SubmitButton>
-
-
-
-        {/*<FormMessage message={searchParams} />*/}
         </div>
       </form>
     </>
