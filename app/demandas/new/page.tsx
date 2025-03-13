@@ -278,7 +278,7 @@ export default function CreateDemandPage() {
             required
             value={demand.fecha_inicio}
             onChange={handleChange}
-            className="border border-solid border-slate-950"
+            className="border border-solid border-slate-950 text-black"
           />
 
           <Label htmlFor="fecha_vencimiento">Fecha de vencimiento</Label>
@@ -288,7 +288,7 @@ export default function CreateDemandPage() {
             required
             value={demand.fecha_vencimiento}
             onChange={handleChange}
-            className="border border-solid border-slate-950"
+            className="border border-solid border-slate-950 text-black"
           />
 
           <Label htmlFor="id_categoria">Categoria</Label>
@@ -297,7 +297,7 @@ export default function CreateDemandPage() {
             required
             value={demand.id_categoria} 
             onChange={handleChange}
-            className="border p-2 rounded mb-2 border-solid border-slate-950"
+            className="border p-2 rounded mb-2 border-solid border-slate-950 bg-white text-black"
           >
             <option value="" disabled>Selecciona una categoría</option>
             {categorias.map((categoria) => (
@@ -353,7 +353,7 @@ export default function CreateDemandPage() {
             required
             value={demand.detalle}
             onChange={handleChange}
-            className="border border-solid border-slate-950"
+            className="border border-solid border-slate-950 bg-white text-black"
             rows={4}
           />
 
