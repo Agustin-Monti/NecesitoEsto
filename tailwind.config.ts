@@ -75,6 +75,11 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
+  safelist: [
+    // Asegúrate de que los estilos del input de tipo date no se purguen
+    "input[type='date']",
+    "input[type='date']::-webkit-calendar-picker-indicator",
+  ],
 } satisfies Config;
 
 export default config;
