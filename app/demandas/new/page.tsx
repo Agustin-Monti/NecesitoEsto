@@ -290,7 +290,7 @@ export default function CreateDemandPage() {
             required
             value={demand.id_categoria}
             onChange={handleChange}
-            className="border p-2 rounded mb-2 border-solid border-slate-950"
+            className="border p-2 rounded mb-2 border-solid border-slate-950 bg-white"
           >
             <option value="" disabled>Selecciona una categoría</option>
             {categorias.map((categoria) => (
@@ -340,11 +340,11 @@ export default function CreateDemandPage() {
             required
             value={demand.detalle}
             onChange={handleChange}
-            className="border border-solid border-slate-950"
+            className="border border-solid border-slate-950 bg-white"
             rows={4}
           />
 
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4">
+          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4 mb-10">
             Crear Demanda
           </button>
         </div>
