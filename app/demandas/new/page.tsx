@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { createDemandAction, getCategorias, getPaises, getRubros } from "@/actions/demanda-actions";
 import { Input } from "@/components/ui/input";
@@ -18,7 +17,6 @@ type CreateDemandResponse = {
 };
 
 export default function CreateDemandPage() {
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -47,17 +45,7 @@ export default function CreateDemandPage() {
     console.log("Estado actualizado:", status, success);
   }, [status, success]);
 
-  useEffect(() => {
-    if (searchParams) {
-      const statusParam = searchParams.get("status");
-      const successParam = searchParams.get("success");
-
-      if (statusParam && successParam) {
-        setStatus(statusParam);
-        setSuccess(decodeURIComponent(successParam));
-      }
-    }
-  }, [searchParams]);
+  
 
   useEffect(() => {
     const fetchUser = async () => {
