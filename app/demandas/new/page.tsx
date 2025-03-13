@@ -336,7 +336,7 @@ export default function CreateDemandPage() {
           <Label htmlFor="detalle">Detalle</Label>
           <textarea
             name="detalle"
-            placeholder="Describa el detalle de la demanda"
+            placeholder=" Describa el detalle de la demanda"
             required
             value={demand.detalle}
             onChange={handleChange}
