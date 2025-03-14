@@ -27,6 +27,9 @@ export async function updateProfileAction(formData: FormData) {
     localidad: formData.get("localidad") as string,
     codigo_postal: formData.get("codigo_postal") as string,
     direccion: formData.get("direccion") as string,
+    telefono: formData.get("telefono") as string, // Asegúrate de incluir este campo si existe
+    empresa: formData.get("empresa") as string, // Nuevo campo
+    pais_id: formData.get("pais_id") as string, // Nuevo campo
   };
 
   try {
