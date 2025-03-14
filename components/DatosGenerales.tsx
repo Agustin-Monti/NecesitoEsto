@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { updateProfileAction } from "@/actions/profile-actions";
+import { createClient } from "@/utils/supabase/client";
 
 interface Profile {
   id?: string;
@@ -14,6 +15,8 @@ interface Profile {
   codigo_postal: string;
   created_at: string;
   telefono:string;
+  empresa: string; 
+  pais_id: string; 
 }
 
 interface DatosGeneralesProps {
@@ -25,10 +28,31 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [formattedFecha, setFormattedFecha] = useState<string>("");
+  const [paises, setPaises] = useState<{ id: string; nombre: string }[]>([]);
 
   useEffect(() => {
     setFormattedFecha(formatFecha(profile.created_at));
   }, [profile.created_at]);
+
+
+  useEffect(() => {
+    const fetchPaises = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.from("pais").select("id, nombre");
+  
+        if (error) {
+          console.error("Error al obtener países:", error.message);
+        } else {
+          setPaises(data);
+        }
+      } catch (err: any) {
+        console.error("Error al obtener países:", err.message);
+      }
+    };
+  
+    fetchPaises();
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -36,7 +60,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       Object.entries(profile).forEach(([key, value]) => {
         if (key !== "fecha_creacion" && key !== "id") formData.append(key, value as string);
       });
-
+  
       const result = await updateProfileAction(formData);
       if (result.success) {
         setSuccess(true);
@@ -91,7 +115,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.nombre}
             onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
 
@@ -102,8 +126,36 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.apellido}
             onChange={(e) => setProfile({ ...profile, apellido: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
+        </div>
+
+        {/* Campo Apellido */}
+        <div className="flex flex-col mb-1">
+          <label className="block mb-2 font-semibold">Empresa</label>
+          <input
+            type="text"
+            value={profile.empresa}
+            onChange={(e) => setProfile({ ...profile, empresa: e.target.value })}
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+          />
+        </div>
+
+        {/* Campo Pais */}
+        <div className="flex flex-col mb-1">
+          <label className="block mb-2 font-semibold">País</label>
+          <select
+            value={profile.pais_id}
+            onChange={(e) => setProfile({ ...profile, pais_id: e.target.value })}
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+          >
+            <option value="">Seleccione un país</option>
+            {paises.map((pais) => (
+              <option key={pais.id} value={pais.id}>
+                {pais.nombre}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Campo Provincia */}
@@ -113,7 +165,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.provincia}
             onChange={(e) => setProfile({ ...profile, provincia: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
 
@@ -124,7 +176,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.municipio}
             onChange={(e) => setProfile({ ...profile, municipio: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
 
@@ -135,7 +187,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.localidad}
             onChange={(e) => setProfile({ ...profile, localidad: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
 
@@ -146,7 +198,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.direccion}
             onChange={(e) => setProfile({ ...profile, direccion: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
 
@@ -157,7 +209,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.codigo_postal}
             onChange={(e) => setProfile({ ...profile, codigo_postal: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
 
@@ -168,7 +220,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             type="text"
             value={profile.telefono}
             onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition bg-white"
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
         </div>
       </div>
