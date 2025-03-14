@@ -17,6 +17,8 @@ interface Profile {
   codigo_postal: string;
   created_at: string;
   telefono:string;
+  empresa: string; 
+  pais_id: string; 
 }
 
 export default function ProfilePage() {
