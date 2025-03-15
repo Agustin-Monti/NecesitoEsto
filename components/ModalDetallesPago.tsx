@@ -364,8 +364,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
         {/* Si el usuario tiene demanda gratis, mostramos el mensaje */}
         {demandaGratis  ? (
           <div className="alert alert-success p-4 text-green-700 bg-green-100 rounded-lg mt-10">
-            🎉 ¡Felicidades! Tienes esta demanda gratis. <br />
-            No necesitas pagar nada. <br />
+            🎉 ¡Felicidades! No necesitas pagar nada, realiza el contacto directo con el responsable de la publicación. <br />
             <button 
               className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center mt-3"
               onClick={manejarDemanda}
