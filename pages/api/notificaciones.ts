@@ -7,6 +7,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_PASSWORD) {
+    console.error('Faltan configurar las credenciales de Gmail.');
+    return res.status(500).json({ message: 'Error de configuración del servidor' });
+  }
+
   const today = new Date();
   const twoDaysLater = new Date();
   twoDaysLater.setDate(today.getDate() + 2);
@@ -26,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!demandas || demandas.length === 0) {
-    return res.status(200).json({ message: 'No hay demandas por vencer' });
+    return res.status(204).end();
   }
 
   const transporter = nodemailer.createTransport({
@@ -37,11 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   });
 
+  console.log(`Procesando ${demandas.length} demandas.`);
+
   for (const demanda of demandas) {
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: demanda.email_contacto,
-      subject: 'Tu demanda está por vencer.',
+      subject: 'Tu demanda está por vencer',
       text: `Hola, tu demanda "${demanda.detalle}" está por vencer en 2 días. Te recomendamos renovar la fecha para que siga activa y aparezca en el portal demandas, puedes editar la fecha o bien eliminar la demanda si ya no es necesaria; Quedamos atentos a satisfacer tus necesidades.`,
     };
 
