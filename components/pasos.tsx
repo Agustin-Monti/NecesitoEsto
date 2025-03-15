@@ -29,7 +29,7 @@ export default function Pasos() {
         CUAL ES EL FUNCIONAMIENTO DE  "NECESITO <span className="text-blue-700">ESTO!</span>"?
       </h2>
       <p className="text-gray-600 mb-12"> {/* Más espacio entre párrafos */}
-        Detalla tu demanda de forma clara y precisa para que las personas interesadas puedan contactarse en forma directa y acercar una propuesta que sea la solución que estás buscando.
+        Detalla tu demanda de forma clara y precisa para que las personas interesadas puedan contactarse en forma directa y acercar una propuesta que sea la solución que estás buscando.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
         {pasos.map((paso) => (
