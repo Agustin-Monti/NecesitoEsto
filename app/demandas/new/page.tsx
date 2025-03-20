@@ -82,6 +82,7 @@ export default function CreateDemandPage() {
           responsable_solicitud: profileData?.nombre || "",
           email_contacto: profileData?.email || "",
           telefono: profileData?.telefono || "",
+          empresa: profileData?.empresa || "",
         }));
       }
 
