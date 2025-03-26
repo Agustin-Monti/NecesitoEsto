@@ -41,10 +41,13 @@ export default function WhatsappButton() {
       href={`https://wa.me/${phoneNumber}?text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`fixed right-4 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg 
-                  transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
-                  border-2 border-transparent flex items-center gap-2 animate-bounce-light text-xs md:text-base md:py-3 md:px-6
-                  bottom-16 ${isVisible ? "block" : "hidden"} z-20`} // Mostrar u ocultar el botón
+      className={`
+        fixed right-4 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg 
+        transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+        border-2 border-transparent flex items-center gap-2 animate-bounce-light text-xs md:text-base md:py-3 md:px-6
+        bottom-16 ${isVisible ? "block" : "hidden"} z-20
+        [&>span]:hidden [&>span]:md:inline  /* Oculta el texto en móvil, muestra en desktop */
+      `}
     >
       {/* SVG de WhatsApp */}
       <svg
@@ -77,7 +80,7 @@ export default function WhatsappButton() {
           clipRule="evenodd"
         ></path>
       </svg>
-      Chatea con nosotros
+      <span>Chatea con nosotros</span>
     </Link>
   );
 }
