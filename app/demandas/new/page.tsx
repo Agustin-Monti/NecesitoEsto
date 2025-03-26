@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { createDemandAction, getCategorias, getPaises, getRubros } from "@/actions/demanda-actions";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ type CreateDemandResponse = {
 };
 
 export default function CreateDemandPage() {
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -38,6 +40,8 @@ export default function CreateDemandPage() {
     rubro: "",
   });
   const [loading, setLoading] = useState(true);
+  const [customCategoria, setCustomCategoria] = useState("");
+  const [isCustomCategoria, setIsCustomCategoria] = useState(false);
   const [customRubro, setCustomRubro] = useState("");
   const [isCustomRubro, setIsCustomRubro] = useState(false);
 
@@ -45,7 +49,17 @@ export default function CreateDemandPage() {
     console.log("Estado actualizado:", status, success);
   }, [status, success]);
 
-  
+  useEffect(() => {
+    if (searchParams) {
+      const statusParam = searchParams.get("status");
+      const successParam = searchParams.get("success");
+
+      if (statusParam && successParam) {
+        setStatus(statusParam);
+        setSuccess(decodeURIComponent(successParam));
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -82,7 +96,6 @@ export default function CreateDemandPage() {
           responsable_solicitud: profileData?.nombre || "",
           email_contacto: profileData?.email || "",
           telefono: profileData?.telefono || "",
-          empresa: profileData?.empresa || "",
         }));
       }
 
@@ -285,21 +298,41 @@ export default function CreateDemandPage() {
             className="border border-solid border-slate-950"
           />
 
-          <Label htmlFor="id_categoria">Categoria</Label>
-          <select
+          <Label htmlFor="id_categoria">Categoría <strong className="text-gray-400 text-x">(Selecciona o crea una nueva)</strong></Label>
+          <Select
             name="id_categoria"
-            required
-            value={demand.id_categoria}
-            onChange={handleChange}
-            className="border p-2 rounded mb-2 border-solid border-slate-950 bg-white"
-          >
-            <option value="" disabled>Selecciona una categoría</option>
-            {categorias.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.categoria}
-              </option>
-            ))}
-          </select>
+            options={[
+              ...categorias.map((categoria) => ({ 
+                value: categoria.id, 
+                label: categoria.categoria 
+              })),
+              { value: "otro", label: "Otro (Agregar nueva categoría)" },
+            ]}
+            onChange={(selectedOption) => {
+              if (selectedOption?.value === "otro") {
+                setIsCustomCategoria(true);
+                handleDemandChange("id_categoria", "");
+              } else {
+                setIsCustomCategoria(false);
+                handleDemandChange("id_categoria", selectedOption?.value ?? "");
+              }
+            }}
+            className="mb-2 border border-solid border-slate-950"
+            placeholder="Selecciona una categoría"
+          />
+
+          {isCustomCategoria && (
+            <input
+              type="text"
+              placeholder="Ingrese nueva categoría"
+              value={customCategoria}
+              onChange={(e) => {
+                setCustomCategoria(e.target.value);
+                handleDemandChange("id_categoria", e.target.value);
+              }}
+              className="border p-2 mb-2 border-solid border-slate-950"
+            />
+          )}
 
           <Label htmlFor="rubro">Rubro <strong className="text-gray-400 text-x">(Escribe tu rubro para buscar el adecuado)</strong></Label>
           <Select
@@ -337,15 +370,15 @@ export default function CreateDemandPage() {
           <Label htmlFor="detalle">Detalle</Label>
           <textarea
             name="detalle"
-            placeholder=" Describa el detalle de la demanda"
+            placeholder="Describa el detalle de la demanda"
             required
             value={demand.detalle}
             onChange={handleChange}
-            className="border border-solid border-slate-950 bg-white"
+            className="border border-solid border-slate-950"
             rows={4}
           />
 
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4 mb-10">
+          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4">
             Crear Demanda
           </button>
         </div>
