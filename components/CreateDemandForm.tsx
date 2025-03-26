@@ -74,11 +74,8 @@ export function CreateDemandForm() {
   useEffect(() => {
     const fetchUser = async () => {
       const supabase = createClient();
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error } = await supabase.auth.getUser();
+  
       if (error) {
         return (
           <div className="w-full flex-1 flex items-center h-screen sm:max-w-md justify-center gap-2 p-4">
@@ -86,29 +83,48 @@ export function CreateDemandForm() {
           </div>
         );
       }
-
+  
       if (user) {
+        // 1. Obtener el perfil (incluyendo pais_id)
         const { data: profileData, error: profileError } = await supabase
           .from("profile")
           .select("*")
           .eq("id", user.id)
           .single();
-
+  
         if (profileError) {
           console.error("Error fetching profile:", profileError);
         } else {
           setProfile(profileData || {});
+  
+          // 2. Obtener el nombre del país SOLO si el perfil tiene pais_id
+          let nombrePais = "País no especificado";
+          if (profileData?.pais_id) {
+            const { data: paisData, error: paisError } = await supabase
+              .from("pais")
+              .select("nombre")
+              .eq("id", profileData.pais_id)
+              .single();
+            
+            if (!paisError && paisData) {
+              nombrePais = paisData.nombre;
+            }
+          }
+  
+          // 3. Actualizar el estado "demand" con todos los datos
+          setDemand((prev: any) => ({
+            ...prev,
+            profile_id: user.id,
+            responsable_solicitud: `${profileData.nombre || ""} ${profileData.apellido || ""}`.trim(),
+            email_contacto: profileData.email || "",
+            telefono: profileData.telefono || "",
+            empresa: profileData.empresa || "",
+            pais_id: profileData.pais_id || "",
+            nombre_pais: nombrePais, // Nuevo campo para mostrar el nombre
+          }));
         }
         setUser(user);
-        setDemand((prev: any) => ({
-          ...prev,
-          profile_id: user.id,
-          responsable_solicitud: profileData?.nombre || "",
-          email_contacto: profileData?.email || "",
-          telefono: profileData?.telefono || "",
-        }));
       }
-
       setLoading(false);
     };
 
@@ -240,57 +256,41 @@ export function CreateDemandForm() {
           <Input
             className="border border-solid border-slate-950"
             name="empresa"
-            placeholder="Nombre de la empresa"
-            required
             value={demand.empresa}
-            onChange={handleChange}
+            readOnly 
           />
 
-          <Label htmlFor="pais_id">Paises</Label>
-          <select
-            name="pais_id"
-            required
-            value={demand.pais_id}
-            onChange={handleChange}
-            className="border p-2 rounded mb-2 border-solid border-slate-950 bg-white"
-          >
-            <option value="" disabled>Selecciona un Pais</option>
-            {paises.map((pais) => (
-              <option key={pais.id} value={pais.id}>
-                {pais.nombre}
-              </option>
-            ))}
-          </select>
+          <Label htmlFor="pais">País</Label>
+          <Input
+            name="pais"
+            value={demand.nombre_pais || "Cargando..."}
+            readOnly
+            className="border border-solid border-slate-950 bg-gray-100"
+          />
 
           <Label htmlFor="responsable_solicitud">Responsable de la solicitud</Label>
           <Input
-            name="responsable_solicitud"
-            placeholder="Nombre del responsable"
-            required
-            value={profile?.nombre || ""}
-            onChange={handleChange}
+            name="responsable_solicitud"            
+            value={demand.responsable_solicitud}
+            readOnly 
             className="border border-solid border-slate-950"
           />
 
           <Label htmlFor="email_contacto">Email de contacto</Label>
           <Input
             name="email_contacto"
-            placeholder="email@ejemplo.com"
             type="email"
-            required
             value={profile?.email || ""}
-            onChange={handleChange}
+            readOnly 
             className="border border-solid border-slate-950"
           />
 
           <Label htmlFor="telefono">Teléfono de contacto</Label>
           <Input
             name="telefono"
-            placeholder="Número de teléfono"
             type="tel"
-            required
             value={demand.telefono}
-            onChange={handleChange}
+            readOnly 
             className="border border-solid border-slate-950"
           />
 
@@ -380,7 +380,7 @@ export function CreateDemandForm() {
           <Label htmlFor="detalle">Detalle</Label>
           <textarea
             name="detalle"
-            placeholder="Describa el detalle de la demanda"
+            placeholder=" Describa el detalle de la demanda"
             required
             value={demand.detalle}
             onChange={handleChange}
@@ -388,7 +388,7 @@ export function CreateDemandForm() {
             rows={4}
           />
 
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4">
+          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4 mb-2">
             Crear Demanda
           </button>
         </div>
