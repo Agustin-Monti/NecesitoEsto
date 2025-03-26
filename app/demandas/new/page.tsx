@@ -8,19 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Select from "react-select";
 import { Alert } from "@/components/ui/alert";
-import dynamic from 'next/dynamic';
+import DatePicker from "react-date-picker";
 import "react-date-picker/dist/DatePicker.css";
 import "react-calendar/dist/Calendar.css";
-
-// Carga dinámica del DatePicker para evitar problemas SSR
-const DatePicker  = dynamic(
-  () => import('react-date-picker').then((mod) => mod.default),
-  { 
-    ssr: false,
-    loading: () => <input type="text" className="border p-2" disabled value="Cargando selector de fecha..." />
-  }
-);
-
 
 type CreateDemandResponse = {
   success: boolean;
