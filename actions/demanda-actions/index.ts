@@ -40,13 +40,38 @@ export const createDemandAction = async (demand: any): Promise<CreateDemandRespo
 
     const user_id = user?.id;
 
+    let categoria_id;
     let rubro_id;
 
-    // Verificar si el rubro es un ID o un texto nuevo
+    // Procesar categoría (puede ser ID existente o texto para nueva categoría)
+    if (isNaN(Number(id_categoria))) {
+      // Crear nueva categoría
+      const { data: newCategoria, error: newCategoriaError } = await supabase
+        .from("categorias")
+        .insert({ categoria: id_categoria })
+        .select("id")
+        .single();
+
+      if (newCategoriaError) {
+        console.error("Error creating categoria:", newCategoriaError);
+        return { success: false, message: newCategoriaError.message };
+      }
+
+      categoria_id = newCategoria.id;
+    } else {
+      // Usar categoría existente
+      categoria_id = id_categoria;
+    }
+
+    // Procesar rubro (puede ser ID existente o texto para nuevo rubro)
     if (isNaN(Number(rubro))) {
+      // Crear nuevo rubro asociado a la categoría
       const { data: newRubro, error: newRubroError } = await supabase
         .from("rubros")
-        .insert({ nombre: rubro, categoria_id: id_categoria })
+        .insert({ 
+          nombre: rubro, 
+          categoria_id: categoria_id // Usamos el ID de la categoría (nueva o existente)
+        })
         .select("id")
         .single();
 
@@ -57,21 +82,11 @@ export const createDemandAction = async (demand: any): Promise<CreateDemandRespo
 
       rubro_id = newRubro.id;
     } else {
-      const { data: existingRubro, error: rubroError } = await supabase
-        .from("rubros")
-        .select("id")
-        .eq("id", rubro)
-        .single();
-
-      if (rubroError) {
-        console.error("Error fetching rubro:", rubroError);
-        return { success: false, message: rubroError.message };
-      }
-
-      rubro_id = existingRubro.id;
+      // Usar rubro existente
+      rubro_id = rubro;
     }
 
-    // Insertar la demanda con el rubro_id
+    // Insertar la demanda con los IDs correctos
     const { data, error: demandaError } = await supabase.from("demandas").insert({
       empresa,
       responsable_solicitud,
@@ -79,7 +94,7 @@ export const createDemandAction = async (demand: any): Promise<CreateDemandRespo
       telefono,
       fecha_inicio,
       fecha_vencimiento,
-      id_categoria,
+      id_categoria: categoria_id,
       pais_id,
       detalle,
       profile_id: user_id,
