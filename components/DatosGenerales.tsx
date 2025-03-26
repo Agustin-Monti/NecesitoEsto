@@ -54,6 +54,35 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
     fetchPaises();
   }, []);
 
+// En tu componente
+const sendProfileUpdateEmail = async () => {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user?.email) {
+    console.error('No se pudo obtener el email del usuario');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/mail-perfil', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+      },
+      body: JSON.stringify({
+        email: user.email,
+        nombre: profile.nombre,
+        apellido: profile.apellido
+      }),
+    });
+    // ... resto del código
+  } catch (error) {
+    console.error('Error al enviar correo:', error);
+  }
+};
+
   const handleSave = async () => {
     try {
       const formData = new FormData();
@@ -65,6 +94,8 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       if (result.success) {
         setSuccess(true);
         setError(null);
+        // Llamar a la función para enviar el correo
+        await sendProfileUpdateEmail();
       }
     } catch (err: any) {
       setError(err.message);
@@ -78,17 +109,16 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       return "Fecha no disponible";
     }
   
-    try {  
-      // Intentar convertir la fecha eliminando milisegundos y zona horaria
-      const fechaProcesada = fecha.split(".")[0]; // Eliminamos la parte de los milisegundos
-      const fechaObj = new Date(fechaProcesada);
-  
+    try {
+      // Crear objeto Date directamente (maneja automáticamente el formato ISO)
+      const fechaObj = new Date(fecha);
+      
       if (isNaN(fechaObj.getTime())) {
-        console.log("Fecha inválida después de procesar:", fechaProcesada);
+        console.log("Fecha inválida:", fecha);
         return "Fecha inválida";
       }
   
-      // Extraer día, mes y año
+      // Usar los métodos UTC para evitar problemas de zona horaria
       const dia = fechaObj.getUTCDate().toString().padStart(2, "0");
       const mes = (fechaObj.getUTCMonth() + 1).toString().padStart(2, "0");
       const anio = fechaObj.getUTCFullYear();
