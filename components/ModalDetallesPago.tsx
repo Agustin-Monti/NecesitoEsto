@@ -10,6 +10,7 @@ import { getCupon  } from '@/actions/demanda-actions';
 interface Demanda {
   id: string;
   detalle: string;
+  email_contacto:string;
   rubro_demanda: string;
   fecha_inicio: string;
   fecha_vencimiento: string;
@@ -48,12 +49,14 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
   const [demandaGratis, setDemandaGratis] = useState<boolean>(false); // Estado para verificar demanda gratis
   const [cargando, setCargando] = useState(false);
   const [alertaVisible, setAlertaVisible] = useState(false);
+  const [esCreadorDemanda, setEsCreadorDemanda] = useState(false);
+
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const { data, error } = await supabase
         .from('profile')
-        .select('nombre, email, demanda_gratis') // Agregamos demanda_gratis
+        .select('nombre, email, demanda_gratis')
         .single();
   
       if (error) {
@@ -64,12 +67,27 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
       if (data) {
         setNombrePagador(data.nombre || '');
         setCorreoPagador(data.email || '');
-        setDemandaGratis(data.demanda_gratis || false); // Guardamos si el usuario tiene demanda gratis
+        setDemandaGratis(data.demanda_gratis || false);
+  
+        // Log para verificar los valores antes de actualizar `esCreadorDemanda`
+        console.log("Correo del usuario logueado:", data.email);
+        console.log("Correo del creador de la demanda:", demanda?.email_contacto);
+        console.log("Comparación:", data.email === demanda?.email_contacto);
+  
+        // Verificar si el usuario es el creador de la demanda
+        if (demanda && data.email === demanda.email_contacto) {
+          setEsCreadorDemanda(true);
+          console.log("✅ El usuario es el creador de la demanda");
+        } else {
+          setEsCreadorDemanda(false);
+          console.log("❌ El usuario NO es el creador de la demanda");
+        }
       }
     };
   
     fetchUserProfile();
-  }, [supabase]);
+  }, [supabase, demanda]); // Asegúrate de incluir `demanda` como dependencia
+  
 
 
   // useEffect to update final price when couponDiscount or precioDemandaUSD changes
@@ -115,7 +133,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
     };
 
     fetchUserProfile();
-  }, [supabase]);
+  }, [supabase, demanda]);
 
   // Function to create the payment preference on the server
   const createPreference = async (price: number) => {
@@ -364,7 +382,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
         {/* Si el usuario tiene demanda gratis, mostramos el mensaje */}
         {demandaGratis  ? (
           <div className="alert alert-success p-4 text-green-700 bg-green-100 rounded-lg mt-10">
-            🎉 ¡Felicidades! No necesitas pagar nada, realiza el contacto directo con el responsable de la publicación. <br />
+            🎉 ¡Felicidades! No necesitas pagar nada, realiza el contacto directo con el responsable de la publicación <br />
             <button 
               className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center mt-3"
               onClick={manejarDemanda}
@@ -373,7 +391,13 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
               {cargando ? "Obteniendo Demanda... ⏳" : "Obtener información sobre la demanda"}
             </button>
           </div>
-        ) : (
+        ) : esCreadorDemanda ? (
+          /* Si el usuario es el creador de la demanda, mostrar advertencia */
+          <div className="bg-red-100 text-red-700 p-4 rounded-lg mt-4">
+            ❌ No puedes pagar por tu propia demanda.
+          </div>
+        
+        ): (
           // Si no tiene demanda gratis, mostramos los métodos de pago normales
           !showPaymentMethods && (
             <button
