@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: correoPagador,
-      subject: `Pago aprobado para la demanda de Necesito Esto!`,
+      subject: `✅ Pago aprobado para la demanda de Necesito Esto!`,
       html: `
         <p style="font-size: 18px; color: #333; font-weight: bold; background-color: #f0f8ff; padding: 10px; border-radius: 5px;">
           Hola ${nombrePagador},
@@ -82,6 +82,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Enviar el correo
     await transporter.sendMail(mailOptions);
     console.log('Correo enviado correctamente.');
+
+    // Insertar registro en la tabla pagos
+    const { error: pagoError } = await supabase.from('pagos').insert([
+      {
+        demanda_id: idDemanda,
+        detalle_demanda: detalle,
+        nombre_pagador: nombrePagador,
+        correo_pagador: correoPagador,
+        numero_pago: null, // Dejar vacío
+        monto: 0.00,
+        fecha_pago: new Date().toISOString(),
+        estado_pago: 'aprobado',
+        metodo_pago: 'Gratis',
+        id_transaccion: null, // Puede ser null si no se usa
+        moneda: 'USD', // O la moneda que estés manejando
+      },
+    ]);
+
+    if (pagoError) {
+      console.error('Error insertando el pago:', pagoError);
+      return res.status(500).json({ message: 'Error registrando el pago' });
+    }
 
     res.status(200).json({ message: 'Correo enviado correctamente' });
 
