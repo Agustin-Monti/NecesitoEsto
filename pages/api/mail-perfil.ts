@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: email, // Enviar al usuario, no a ti mismo
-      subject: `Actualización de perfil en ${process.env.SITE_NAME || 'nuestro sitio'}`,
+      subject: `Actualización de perfil en Necesito Esto!`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Estimado/a ${nombre} ${apellido || ''}</h2>
@@ -40,6 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           </p>
           <p>Atentamente,</p>
           <p>El equipo de Necesito Esto!</p>
+          <br />
+          <p>¡No reenviar este mail!</p>
         </div>
       `,
     };
