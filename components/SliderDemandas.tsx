@@ -80,6 +80,7 @@ export default function SliderDemandas({ demandas }: { demandas: any[] }) {
               <div key={demanda.id} className="mr-4 p-3">
                 <div className="border border-solid border-slate-950 h-80 p-4 rounded-lg relative text-center">
                   <div className="flex items-center justify-between mb-4 flex-start">
+                    <p className="text-lg font-semibold">[{demanda.id}] </p>
                     <h3 className="font-bold text-lg truncate">{demanda.detalle}</h3>
                     {demanda.pais && demanda.pais.bandera_url && (
                       <img
