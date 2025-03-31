@@ -171,6 +171,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
               className="relative border border-gray-300 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out"
             >
               <div className="flex items-center justify-between">
+                <p className="text-lg font-semibold">[{demanda.id}] </p>
                 <h3 className="text-lg font-semibold truncate">{demanda.detalle}</h3>
                 {demanda.pais && demanda.pais.bandera_url && (
                   <Image
