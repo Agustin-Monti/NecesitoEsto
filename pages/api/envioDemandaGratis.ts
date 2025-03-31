@@ -76,6 +76,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <p style="font-size: 20px; color: #333;">
           Necesito <span style="margin: 10px 0; color: #007bff; font-weight: bold;">Esto!</span>
         </p>
+
+        <br />
+        
+        <p>¡No reenviar este mail!</p>
       `,
     };
 
