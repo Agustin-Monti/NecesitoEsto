@@ -92,6 +92,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
 
             return (
               <div key={demanda.id} className="bg-white shadow-lg rounded-xl p-5 border border-gray-200 hover:shadow-xl transition duration-300 flex flex-col h-[300px]">
+                <p className="text-lg font-semibold">[{demanda.id}]</p>
                 <h3 className="text-lg font-semibold text-gray-800 truncate">{demanda.detalle}</h3>
                 <p className="text-gray-500 text-sm">Categoría: {demanda.categorias?.categoria || "Sin Categoría"}</p>
                 <p className="text-gray-500 text-sm">Rubro: {demanda.rubros?.nombre || "Sin Rubro"}</p>
