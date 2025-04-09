@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/eliminarDemanda",
-      "schedule": "0 9 * * *"   // Ejecuta todos los días a las 9 AM
+      "schedule": "0 9 * * *"  
     }
   ]
 }
