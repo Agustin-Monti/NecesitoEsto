@@ -4,6 +4,10 @@
     {
       "path": "/api/notificaciones",
       "schedule": "30 17 * * *"
+    },
+    {
+      "path": "/api/eliminarDemanda",
+      "schedule": "0 9 * * *"   // Ejecuta todos los días a las 9 AM
     }
   ]
 }
