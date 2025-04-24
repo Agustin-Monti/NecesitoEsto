@@ -8,7 +8,7 @@ import ModalDetallesPago from "@/components/ModalDetallesPago";
 import { MoveRight } from "lucide-react";
 import Image from "next/image";
 
-export default function SliderDemandas({ demandas }: { demandas: any[] }) {
+export default function SliderDemandas({ demandas, userId }: { demandas: any[]; userId: string | null }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [demandaSeleccionada, setDemandaSeleccionada] = useState<any>(null);
   const { theme } = useTheme();
@@ -129,6 +129,7 @@ export default function SliderDemandas({ demandas }: { demandas: any[] }) {
         isOpen={modalOpen}
         onClose={cerrarModal}
         demanda={demandaSeleccionada}
+        userId={userId}
       />
     </>
   );
