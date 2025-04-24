@@ -5,9 +5,11 @@ import ModalDetallesPago from "@/components/ModalDetallesPago";
 export default function DemandasClienteCategoria({
   demandas,
   idCategoria,
+  userId,
 }: {
   demandas: any[];
   idCategoria: number;
+  userId: string | null;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [demandaSeleccionada, setDemandaSeleccionada] = useState(null);
@@ -61,7 +63,7 @@ export default function DemandasClienteCategoria({
       </div>
 
       {/* Renderizar el modal cuando sea necesario */}
-      {demandaSeleccionada && ( <ModalDetallesPago isOpen={modalOpen} onClose={cerrarModal} demanda={demandaSeleccionada} /> )}
+      {demandaSeleccionada && ( <ModalDetallesPago isOpen={modalOpen} onClose={cerrarModal} demanda={demandaSeleccionada} userId={userId}/> )}
     </>
   );
 }
