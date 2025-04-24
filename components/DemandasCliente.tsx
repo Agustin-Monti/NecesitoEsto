@@ -230,7 +230,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       </div>
 
       {/* Modal */}
-      <ModalDetallesPago isOpen={modalOpen} onClose={cerrarModal} demanda={demandaSeleccionada} />
+      <ModalDetallesPago isOpen={modalOpen} onClose={cerrarModal} demanda={demandaSeleccionada} userId={userId} />
     </div>
   );
 }
