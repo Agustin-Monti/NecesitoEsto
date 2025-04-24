@@ -31,9 +31,10 @@ interface ModalDetallesPagoProps {
   isOpen: boolean;
   onClose: () => void;
   demanda: Demanda;  // Use the correct type for demanda
+  userId: string | null;
 }
 
-const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, demanda }) => {
+const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, demanda, userId }) => {
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const [isCreatingPreference, setIsCreatingPreference] = useState(false);
   const [error, setError] = useState<string | null>(null); // For error handling
@@ -54,41 +55,49 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const { data, error } = await supabase
-        .from('profile')
-        .select('nombre, email, demanda_gratis')
-        .single();
-  
-      if (error) {
-        console.error('Error fetching user profile:', error);
+      if (!userId) {
+        console.warn("⚠️ No se proporcionó userId.");
         return;
       }
   
-      if (data) {
-        setNombrePagador(data.nombre || '');
-        setCorreoPagador(data.email || '');
-        setDemandaGratis(data.demanda_gratis || false);
+      console.log("🔍 Consultando perfil para userId:", userId);
   
-        // Log para verificar los valores antes de actualizar `esCreadorDemanda`
-        console.log("Correo del usuario logueado:", data.email);
-        console.log("Correo del creador de la demanda:", demanda?.email_contacto);
-        console.log("Comparación:", data.email === demanda?.email_contacto);
+      const { data, error } = await supabase
+        .from('profile')
+        .select('id, nombre, email, demanda_gratis')
+        .eq('id', userId); 
   
-        // Verificar si el usuario es el creador de la demanda
-        if (demanda && data.email === demanda.email_contacto) {
+      if (error) {
+        console.error('❌ Error al obtener perfil:', error);
+        return;
+      }
+  
+      console.log("📦 Resultado completo del perfil:", data);
+  
+      if (data && data.length === 1) {
+        const userData = data[0];
+        console.log("✅ Usuario encontrado:", userData);
+  
+        setNombrePagador(userData.nombre || '');
+        setCorreoPagador(userData.email || '');
+        setDemandaGratis(userData.demanda_gratis || false);
+  
+        if (demanda && userData.email === demanda.email_contacto) {
+          console.log("✅ Es el creador de la demanda.");
           setEsCreadorDemanda(true);
-          console.log("✅ El usuario es el creador de la demanda");
         } else {
           setEsCreadorDemanda(false);
-          console.log("❌ El usuario NO es el creador de la demanda");
         }
+      } else if (data && data.length > 1) {
+        console.warn("⚠️ Múltiples perfiles encontrados con el mismo userId:", data);
+      } else {
+        console.warn("⚠️ No se encontró ningún perfil con el userId:", userId);
       }
     };
   
     fetchUserProfile();
-  }, [supabase, demanda]); // Asegúrate de incluir `demanda` como dependencia
+  }, [userId, demanda]);
   
-
 
   // useEffect to update final price when couponDiscount or precioDemandaUSD changes
   useEffect(() => {
@@ -109,31 +118,46 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
   useEffect(() => {
     const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY as string;
     if (publicKey) {
-      initMercadoPago(publicKey, {
-        locale: 'es-AR',
-      });
+      initMercadoPago(publicKey, { locale: 'es-AR' });
     }
-
-    // Fetch user profile from Supabase
+  
     const fetchUserProfile = async () => {
+      if (!userId) return;
+  
+      console.log("🔍 Consultando perfil para userId:", userId);
+  
       const { data, error } = await supabase
         .from('profile')
-        .select('nombre, email') // Ensure correct table name
-        .single();
-
+        .select('id, nombre, email, demanda_gratis')
+        .eq('id', userId);
+  
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('❌ Error fetching user profile:', error);
         return;
       }
-
-      if (data) {
-        setNombrePagador(data.nombre || '');
-        setCorreoPagador(data.email || '');
+  
+      if (data?.length === 1) {
+        const usuario = data[0];
+        console.log("✅ Usuario encontrado:", usuario);
+  
+        setNombrePagador(usuario.nombre || '');
+        setCorreoPagador(usuario.email || '');
+        setDemandaGratis(usuario.demanda_gratis || false);
+  
+        if (demanda && usuario.email === demanda.email_contacto) {
+          setEsCreadorDemanda(true);
+          console.log("🎯 Es el creador de la demanda");
+        } else {
+          setEsCreadorDemanda(false);
+        }
+      } else {
+        console.warn("⚠️ Usuario no encontrado o múltiples resultados");
       }
     };
-
+  
     fetchUserProfile();
-  }, [supabase, demanda]);
+  }, [userId, demanda]);
+  
 
   // Function to create the payment preference on the server
   const createPreference = async (price: number) => {
@@ -183,8 +207,6 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
     }
   };
   
-
-
 
   // Handle the click for showing payment methods
   const handleShowPaymentMethods = () => {
@@ -377,28 +399,23 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
         </div>
 
 
-
-        {/* Botón para mostrar métodos de pago */}
         {/* Si el usuario tiene demanda gratis, mostramos el mensaje */}
-        {demandaGratis  ? (
+        {esCreadorDemanda ? (
+          <div className="bg-red-100 text-red-700 p-4 rounded-lg mt-4">
+            ❌ No puedes pagar por tu propia demanda, Prueba con mirar otras Demandas.
+          </div>
+        ) : demandaGratis ? (
           <div className="alert alert-success p-4 text-green-700 bg-green-100 rounded-lg mt-10">
             🎉 ¡Felicidades! No necesitas pagar nada, realiza el contacto directo con el responsable de la publicación <br />
             <button 
               className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center mt-3"
               onClick={manejarDemanda}
-              disabled={cargando} // Deshabilita el botón mientras carga
+              disabled={cargando}
             >
-              {cargando ? "Obteniendo Demanda... ⏳" : "Obtener información sobre la demanda"}
+              {cargando ? "Obteniendo Demanda Espera un Momento... ⏳" : "Obtener información sobre la demanda"}
             </button>
           </div>
-        ) : esCreadorDemanda ? (
-          /* Si el usuario es el creador de la demanda, mostrar advertencia */
-          <div className="bg-red-100 text-red-700 p-4 rounded-lg mt-4">
-            ❌ No puedes pagar por tu propia demanda.
-          </div>
-        
-        ): (
-          // Si no tiene demanda gratis, mostramos los métodos de pago normales
+        ) : (
           !showPaymentMethods && (
             <button
               className="bg-blue-600 text-white py-3 px-6 rounded-lg w-full text-center mt-10"
@@ -408,6 +425,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
             </button>
           )
         )}
+
 
 
         {/* Métodos de pago */}
@@ -470,7 +488,7 @@ const ModalDetallesPago: React.FC<ModalDetallesPagoProps> = ({ isOpen, onClose, 
                       bg-green-600 text-white p-4 rounded-lg text-lg font-bold shadow-lg
                       transition-opacity duration-500 opacity-100 animate-fadeIn"
           >
-            ✅ Demanda entregada correctamente.
+            ✅ Demanda entregada correctamente, Revisa tu Correo los datos de la demanda fueron enviado allí.
           </div>
         )}
       </div>
