@@ -22,6 +22,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
   const [rubros, setRubros] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [ordenId, setOrdenId] = useState('');
   const searchParams = useSearchParams();
 
   const abrirModal = (demanda: any) => {
@@ -72,36 +73,50 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     }
   };
 
-  useEffect(() => {
-    let demandasFiltradas = demandas;
-
+  const aplicarFiltros = (demandasParaFiltrar: any[]) => {
+    let demandasFiltradas = [...demandasParaFiltrar];
+  
     if (searchQuery) {
       demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.detalle.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
+  
     if (categoriaSeleccionada && !rubroSeleccionado) {
       demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.categorias?.id === categoriaSeleccionada
       );
     }
-
+  
     if (rubroSeleccionado) {
       demandasFiltradas = demandasFiltradas.filter((demanda) =>
         demanda.rubros?.id === rubroSeleccionado
       );
     }
-
+  
+    if (ordenId === 'desc') {
+      demandasFiltradas.sort((a, b) => b.id - a.id);
+    } else if (ordenId === 'asc') {
+      demandasFiltradas.sort((a, b) => a.id - b.id);
+    }
+  
     setFilteredDemandas(demandasFiltradas);
-  }, [searchQuery, categoriaSeleccionada, rubroSeleccionado, demandas]);
+  };
+  
+
+  useEffect(() => {
+    aplicarFiltros(demandas);
+  }, [searchQuery, categoriaSeleccionada, rubroSeleccionado, demandas, ordenId]);
+  
 
   const resetFilters = () => {
     setCategoriaSeleccionada('');
     setRubroSeleccionado('');
     setSearchQuery('');
+    setOrdenId('');
     setFilteredDemandas(demandas);
   };
+  
 
   return (
     <div className="mb-4 mt-[6rem] lg:mt-40"> {/* Margen superior en móvil y desktop */}
@@ -144,6 +159,26 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
             ))}
           </select>
         </div>
+
+        <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
+          <select
+            onChange={(e) => {
+              const value = e.target.value;
+              setOrdenId(value);
+              setTimeout(() => {
+                aplicarFiltros(demandas);
+              }, 0); // Esto fuerza a aplicar filtros después del cambio de estado
+            }}            
+            value={ordenId}
+            className="w-full py-2 px-4 border rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Ordenar por</option>
+            <option value="desc">Más antiguas primero</option>
+            <option value="asc">Más recientes primero</option>
+          </select>
+        </div>
+
+
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Search
