@@ -1,17 +1,25 @@
 "use client";
 
-
 import React, { useState, useEffect } from "react";
-import { updateProfileAction, getPaises } from "@/actions/profile-actions";
+import { useRouter } from "next/navigation";
+import { updateProfileAction, getPaises, getCategorias, getRubros } from "@/actions/profile-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import Select from "react-select";
 
 export function InitialProfileForm() {
   const [status, setStatus] = useState<"success" | "destructive" | "default">("default");
   const [message, setMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [paises, setPaises] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [rubros, setRubros] = useState<any[]>([]);
+  const [isCustomCategoria, setIsCustomCategoria] = useState(false);
+  const [isCustomRubro, setIsCustomRubro] = useState(false);
+  const [customCategoria, setCustomCategoria] = useState("");
+  const [customRubro, setCustomRubro] = useState("");
+  const router = useRouter();
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -22,11 +30,15 @@ export function InitialProfileForm() {
     localidad: "",
     direccion: "",
     codigo_postal: "",
-    pais_id: ""
+    pais_id: "",
+    id_categoria: "",
+    rubro: "",
   });
 
   useEffect(() => {
     getPaises().then(setPaises).catch(console.error);
+    getCategorias().then(setCategorias).catch(console.error);
+    getRubros().then(setRubros).catch(console.error);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -59,7 +71,9 @@ export function InitialProfileForm() {
         localidad: "",
         direccion: "",
         codigo_postal: "",
-        pais_id: ""
+        pais_id: "",
+        id_categoria: "",
+        rubro: "",
       });
     }
   };
@@ -73,7 +87,12 @@ export function InitialProfileForm() {
           variant={status}
           title={status === "success" ? "Éxito" : "Error"}
           description={message}
-          onClose={() => setShowAlert(false)}
+          onClose={() => {
+            setShowAlert(false);
+            if (status === "success") {
+              router.push("/"); // redirige a la página principal
+            }
+          }}
         />
       )}
 
@@ -194,7 +213,98 @@ export function InitialProfileForm() {
                 required
               />
             </div>
+
           </div>
+
+        </div>
+
+        <div className="space-y-3">
+        <div>
+                {/* Selección de Categoría */}
+                <Label htmlFor="id_categoria">
+                  Categoría <strong className="text-gray-400 text-xs">(Selecciona o crea una nueva)</strong>
+                </Label>
+                <select
+                  name="id_categoria"
+                  value={formData.id_categoria}
+                  onChange={(e) => {
+                    if (e.target.value === "otro") {
+                      setIsCustomCategoria(true);
+                      handleChange({ target: { name: "id_categoria", value: "" } } as any);
+                    } else {
+                      setIsCustomCategoria(false);
+                      handleChange(e);
+                    }
+                  }}
+                  required
+                  className="w-full p-2 border border-solid border-slate-950"
+                >
+                  <option value="">Selecciona una categoría</option>
+                  {categorias.map((categoria) => (
+                    <option key={categoria.id} value={categoria.id}>
+                      {categoria.categoria}
+                    </option>
+                  ))}
+                  <option value="otro">Otro (Agregar nueva categoría)</option>
+                </select>
+
+                {isCustomCategoria && (
+                  <input
+                    type="text"
+                    placeholder="Ingrese nueva categoría"
+                    value={customCategoria}
+                    onChange={(e) => {
+                      setCustomCategoria(e.target.value);
+                      handleChange({ target: { name: "id_categoria", value: e.target.value } } as any);
+                    }}
+                    className="border p-2 mb-2 mt-2 border-solid border-slate-950"
+                  />
+                )}
+            </div>
+
+            
+            <div>
+                {/* Selección de Rubro */}
+                <Label htmlFor="rubro">
+                  Rubro <strong className="text-gray-400 text-xs">(Escribe tu rubro para buscar el adecuado)</strong>
+                </Label>
+                  <select
+                    name="rubro"
+                    value={formData.rubro}
+                    onChange={(e) => {
+                      if (e.target.value === "otro") {
+                        setIsCustomRubro(true);
+                        handleChange({ target: { name: "rubro", value: "" } } as any);
+                      } else {
+                        setIsCustomRubro(false);
+                        handleChange(e);
+                      }
+                    }}
+                    required
+                    className="w-full p-2 border border-solid border-slate-950"
+                  >
+                  <option value="">Selecciona un rubro</option>
+                  {rubros.map((rubro) => (
+                    <option key={rubro.id} value={rubro.id}>
+                      {rubro.nombre}
+                    </option>
+                  ))}
+                  <option value="otro">Otro (Agregar nuevo rubro)</option>
+                </select>
+
+                {isCustomRubro && (
+                  <input
+                    type="text"
+                    placeholder="Ingrese nuevo rubro"
+                    value={customRubro}
+                    onChange={(e) => {
+                      setCustomRubro(e.target.value);
+                      handleChange({ target: { name: "rubro", value: e.target.value } } as any);
+                    }}
+                    className="border p-2 mb-2 mt-2 border-solid border-slate-950"
+                  />
+                )}
+            </div>
         </div>
 
         <button
