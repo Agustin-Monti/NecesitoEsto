@@ -18,7 +18,9 @@ interface Profile {
   created_at: string;
   telefono:string;
   empresa: string; 
-  pais_id: string; 
+  pais_id: string;
+  id_categoria:string;
+  rubro_id:string;
 }
 
 export default function ProfilePage() {
