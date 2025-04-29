@@ -7,19 +7,48 @@ import { redirect } from "next/navigation";
 export async function updateProfileAction(formData: FormData): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient();
 
-  // Obtener el usuario actual desde la sesión
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
   if (userError) {
-    const errorMsg = "Usuario no autenticado";
-    console.error("Error fetching user:", userError);
-    return { success: false, message: errorMsg };
+    return { success: false, message: "Usuario no autenticado" };
   }
 
-  // Extraer los datos del formulario
+  // Procesar categoría
+  let categoria_id = formData.get("id_categoria") as string;
+  if (categoria_id && isNaN(Number(categoria_id))) {
+    const { data: newCategoria, error: newCategoriaError } = await supabase
+      .from("categorias")
+      .insert({ categoria: categoria_id })
+      .select("id")
+      .single();
+
+    if (newCategoriaError) {
+      return { success: false, message: newCategoriaError.message };
+    }
+
+    categoria_id = newCategoria.id;
+  }
+
+  // Procesar rubro
+  let rubro = formData.get("rubro") as string;
+  let rubro_id = rubro;
+  if (rubro && isNaN(Number(rubro))) {
+    const { data: newRubro, error: newRubroError } = await supabase
+      .from("rubros")
+      .insert({ nombre: rubro, categoria_id: categoria_id })
+      .select("id")
+      .single();
+
+    if (newRubroError) {
+      return { success: false, message: newRubroError.message };
+    }
+
+    rubro_id = newRubro.id;
+  }
+
   const updates = {
     nombre: formData.get("nombre") as string,
     apellido: formData.get("apellido") as string,
@@ -31,27 +60,25 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
     telefono: formData.get("telefono") as string,
     empresa: formData.get("empresa") as string,
     pais_id: formData.get("pais_id") as string,
+    id_categoria: categoria_id,
+    rubro_id: rubro_id,
   };
 
   try {
-    // Actualizar el perfil del usuario
     const { error } = await supabase
       .from("profile")
       .update(updates)
       .eq("id", user?.id);
 
     if (error) {
-      console.error("Supabase error:", error);
       return { success: false, message: error.message };
     }
 
-    console.log("Perfil actualizado con éxito");
     return { success: true, message: "Perfil actualizado correctamente" };
   } catch (error) {
-    console.error("Error al actualizar perfil:", error);
-    return { 
-      success: false, 
-      message: error instanceof Error ? error.message : "Error desconocido al actualizar perfil" 
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error desconocido al actualizar perfil",
     };
   }
 }
@@ -90,3 +117,33 @@ export const fetchProfile = async (userId: string) => {
     throw new Error("No se pudo obtener el perfil");
   }
 };
+
+
+export async function getCategorias() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categorias") // Nombre de la tabla en tu base de datos
+    .select("*");
+
+  if (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+
+  return data;
+}
+
+
+export async function getRubros() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("rubros") // Nombre de la tabla en tu base de datos
+    .select("*");
+
+  if (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+
+  return data;
+}
