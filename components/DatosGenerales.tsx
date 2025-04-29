@@ -17,6 +17,8 @@ interface Profile {
   telefono:string;
   empresa: string; 
   pais_id: string; 
+  id_categoria:string;
+  rubro_id:string;
 }
 
 interface DatosGeneralesProps {
@@ -29,6 +31,8 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
   const [success, setSuccess] = useState<boolean>(false);
   const [formattedFecha, setFormattedFecha] = useState<string>("");
   const [paises, setPaises] = useState<{ id: string; nombre: string }[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string; categoria: string }[]>([]);
+  const [rubros, setRubros] = useState<{ id: string; nombre: string }[]>([]);
 
   useEffect(() => {
     setFormattedFecha(formatFecha(profile.created_at));
@@ -50,38 +54,71 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         console.error("Error al obtener países:", err.message);
       }
     };
+
+    const fetchCategorias = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.from("categorias").select("id, categoria");
+  
+        if (error) {
+          console.error("Error al obtener categorias:", error.message);
+        } else {
+          setCategorias(data);
+        }
+      } catch (err: any) {
+        console.error("Error al obtener categorias:", err.message);
+      }
+    };
+
+    const fetchRubros = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.from("rubros").select("id, nombre");
+  
+        if (error) {
+          console.error("Error al obtener rubros:", error.message);
+        } else {
+          setRubros(data);
+        }
+      } catch (err: any) {
+        console.error("Error al obtener rubros:", err.message);
+      }
+    };
   
     fetchPaises();
+    fetchCategorias();
+    fetchRubros();
   }, []);
 
-// En tu componente
-const sendProfileUpdateEmail = async () => {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user?.email) {
-    console.error('No se pudo obtener el email del usuario');
-    return;
-  }
 
-  try {
-    const response = await fetch('/api/mail-perfil', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-      },
-      body: JSON.stringify({
-        email: user.email,
-        nombre: profile.nombre,
-        apellido: profile.apellido
-      }),
-    });
-    // ... resto del código
-  } catch (error) {
-    console.error('Error al enviar correo:', error);
-  }
-};
+  // En tu componente
+  const sendProfileUpdateEmail = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user?.email) {
+      console.error('No se pudo obtener el email del usuario');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/mail-perfil', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          email: user.email,
+          nombre: profile.nombre,
+          apellido: profile.apellido
+        }),
+      });
+      // ... resto del código
+    } catch (error) {
+      console.error('Error al enviar correo:', error);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -252,6 +289,40 @@ const sendProfileUpdateEmail = async () => {
             onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
             className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
           />
+        </div>
+
+        {/* Campo categoria */}
+        <div className="flex flex-col mb-1">
+          <label className="block mb-2 font-semibold">Categoria</label>
+          <select
+            value={profile.id_categoria}
+            onChange={(e) => setProfile({ ...profile, id_categoria: e.target.value })}
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+          >
+            <option value="">Seleccione un país</option>
+            {categorias.map((categorias) => (
+              <option key={categorias.id} value={categorias.id}>
+                {categorias.categoria}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Campo Pais */}
+        <div className="flex flex-col mb-1">
+          <label className="block mb-2 font-semibold">Rubro</label>
+          <select
+            value={profile.rubro_id}
+            onChange={(e) => setProfile({ ...profile, rubro_id: e.target.value })}
+            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+          >
+            <option value="">Seleccione un país</option>
+            {rubros.map((rubros) => (
+              <option key={rubros.id} value={rubros.id}>
+                {rubros.nombre}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
