@@ -281,10 +281,13 @@ export function InitialProfileForm() {
                   className="w-full p-2 border border-solid border-slate-950"
                 >
                   <option value="">Selecciona una categoría</option>
-                  {categorias.map((categoria) => (
-                    <option key={categoria.id} value={categoria.id}>
-                      {categoria.categoria}
-                    </option>
+                  {categorias
+                    .slice() // para no mutar el array original
+                    .sort((a, b) => a.categoria.localeCompare(b.categoria))
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.categoria}
+                      </option>
                   ))}
                   <option value="otro">Otro (Agregar nueva categoría)</option>
                 </select>
@@ -326,10 +329,13 @@ export function InitialProfileForm() {
                     className="w-full p-2 border border-solid border-slate-950"
                   >
                   <option value="">Selecciona un rubro</option>
-                  {rubros.map((rubro) => (
-                    <option key={rubro.id} value={rubro.id}>
-                      {rubro.nombre}
-                    </option>
+                  {rubros
+                    .slice()
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                    .map((rubro) => (
+                      <option key={rubro.id} value={rubro.id}>
+                        {rubro.nombre}
+                      </option>
                   ))}
                   <option value="otro">Otro (Agregar nuevo rubro)</option>
                 </select>
