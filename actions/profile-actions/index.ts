@@ -18,10 +18,12 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
 
   // Procesar categoría
   let categoria_id = formData.get("id_categoria") as string;
-  if (categoria_id && isNaN(Number(categoria_id))) {
+  const nueva_categoria = formData.get("nueva_categoria") as string;
+
+  if (!categoria_id && nueva_categoria) {
     const { data: newCategoria, error: newCategoriaError } = await supabase
       .from("categorias")
-      .insert({ categoria: categoria_id })
+      .insert({ categoria: nueva_categoria })
       .select("id")
       .single();
 
@@ -33,12 +35,13 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
   }
 
   // Procesar rubro
-  let rubro = formData.get("rubro") as string;
-  let rubro_id = rubro;
-  if (rubro && isNaN(Number(rubro))) {
+  let rubro_id = formData.get("rubro") as string;
+  const nuevo_rubro = formData.get("nuevo_rubro") as string;
+
+  if (!rubro_id && nuevo_rubro) {
     const { data: newRubro, error: newRubroError } = await supabase
       .from("rubros")
-      .insert({ nombre: rubro, categoria_id: categoria_id })
+      .insert({ nombre: nuevo_rubro, categoria_id: categoria_id })
       .select("id")
       .single();
 
