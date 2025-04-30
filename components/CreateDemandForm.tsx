@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/alert";
 import dynamic from 'next/dynamic';
 import "react-date-picker/dist/DatePicker.css";
 import "react-calendar/dist/Calendar.css";
+import { useRouter } from "next/navigation";
 
 // Carga dinámica del DatePicker para evitar problemas SSR
 const DatePicker  = dynamic(
@@ -54,6 +55,8 @@ export function CreateDemandForm() {
   const [isCustomCategoria, setIsCustomCategoria] = useState(false);
   const [customRubro, setCustomRubro] = useState("");
   const [isCustomRubro, setIsCustomRubro] = useState(false);
+  const router = useRouter();
+
 
   useEffect(() => {
     console.log("Estado actualizado:", status, success);
@@ -204,6 +207,11 @@ export function CreateDemandForm() {
           "Su demanda fue creada correctamente y pasará a evaluarse. " +
           "En unos minutos recibirá un correo electrónico con el resultado de la evaluación."
         );
+
+        // Redirigir después de 2.5 segundos
+        setTimeout(() => {
+          router.push("/demandas"); // Ajusta esta ruta a donde quieres llevar al usuario
+        }, 2500);
       } else {
         setStatus("error");
         setSuccess(response.message || "Error al crear la demanda.");
