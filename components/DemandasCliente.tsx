@@ -6,6 +6,7 @@ import { getDemandasByCategoria, getRubrosByCategoria, getDemandasByRubro } from
 import Search from './ui/search';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Select from 'react-select';
 
 interface DemandasClienteProps {
   demandas: any[];
@@ -131,51 +132,66 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       {/* Filtros */}
       <div className={`${showFilters ? 'block' : 'hidden'} lg:flex lg:items-center lg:justify-between gap-6 mb-6`}>
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
-          <select
-            onChange={(e) => handleCategoriaChange(e.target.value)}
-            value={categoriaSeleccionada}
-            className="w-full py-2 px-4 border rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option value="">Seleccionar Categoría</option>
-            {categorias.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.categoria}
-              </option>
-            ))}
-          </select>
+          <Select
+            options={categorias
+              .slice()
+              .sort((a, b) => a.categoria.localeCompare(b.categoria))
+              .map((categoria) => ({
+                value: categoria.id,
+                label: categoria.categoria,
+              }))
+            }
+            value={categorias
+              .map((categoria) => ({
+                value: categoria.id,
+                label: categoria.categoria,
+              }))
+              .find((option) => option.value === categoriaSeleccionada) || null
+            }
+            onChange={(selectedOption) => handleCategoriaChange(selectedOption?.value || '')}
+            placeholder="Seleccionar Categoría"
+            isClearable
+            className="react-select-container"
+            classNamePrefix="react-select"
+          />
         </div>
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
-          <select
-            onChange={(e) => handleRubroChange(e.target.value)}
-            value={rubroSeleccionado}
-            className="w-full py-2 px-4 border rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option value="">Seleccionar Rubro</option>
-            {rubros.map((rubro) => (
-              <option key={rubro.id} value={rubro.id}>
-                {rubro.nombre}
-              </option>
-            ))}
-          </select>
+          <Select
+            options={rubros.map((rubro) => ({
+              value: rubro.id,
+              label: rubro.nombre,
+            }))}
+            onChange={(selectedOption) => handleRubroChange(selectedOption?.value || '')}
+            value={rubros.find((rubro) => rubro.id === rubroSeleccionado) ? {
+              value: rubroSeleccionado,
+              label: rubros.find((rubro) => rubro.id === rubroSeleccionado)?.nombre,
+            } : null}
+            placeholder="Seleccionar Rubro"
+            isClearable
+            className="react-select-container"
+          />
         </div>
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
-          <select
-            onChange={(e) => {
-              const value = e.target.value;
+          <Select
+            options={[
+              { value: '', label: 'Ordenar por' },
+              { value: 'desc', label: 'Más antiguas primero' },
+              { value: 'asc', label: 'Más recientes primero' }
+            ]}
+            onChange={(selectedOption) => {
+              const value = selectedOption?.value || '';
               setOrdenId(value);
               setTimeout(() => {
                 aplicarFiltros(demandas);
               }, 0); // Esto fuerza a aplicar filtros después del cambio de estado
-            }}            
-            value={ordenId}
-            className="w-full py-2 px-4 border rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option value="">Ordenar por</option>
-            <option value="desc">Más antiguas primero</option>
-            <option value="asc">Más recientes primero</option>
-          </select>
+            }}
+            value={ordenId ? { value: ordenId, label: ordenId === 'asc' ? 'Más recientes primero' : 'Más antiguas primero' } : null}
+            placeholder="Ordenar por"
+            className="react-select-container"
+            isClearable
+          />
         </div>
 
 
