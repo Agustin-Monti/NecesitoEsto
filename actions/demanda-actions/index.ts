@@ -154,7 +154,8 @@ export async function getAllDemandas(idCategoria = null) {
       "id, empresa, responsable_solicitud, email_contacto, telefono, fecha_inicio, fecha_vencimiento, detalle, pais (nombre, bandera_url), categorias (id, categoria), rubros (id, nombre)"
     )
     .eq("estado", "aprobada") // Filtrar solo las demandas aprobadas
-    .gt("fecha_vencimiento", new Date().toISOString()); // Excluir demandas vencidas
+    .gt("fecha_vencimiento", new Date().toISOString()) // Excluir demandas vencidas
+    .order("id", { ascending: false }); // Ordenar por id, de mayor a menor
 
   // Filtrar por categoría si se proporciona un `idCategoria`
   if (idCategoria) {
