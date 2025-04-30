@@ -322,10 +322,13 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             }}
           >
             <option value="">Seleccione una categoría</option>
-            {categorias.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.categoria}
-              </option>
+            {categorias
+              .slice() // para no mutar el array original
+              .sort((a, b) => a.categoria.localeCompare(b.categoria))
+              .map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.categoria}
+                </option>
             ))}
             <option value="nueva">+ Agregar nueva categoría</option>
           </select>
@@ -359,10 +362,13 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
             }}
           >
             <option value="">Seleccione un rubro</option>
-            {rubros.map((rubro) => (
-              <option key={rubro.id} value={rubro.id}>
-                {rubro.nombre}
-              </option>
+            {rubros
+              .slice()
+              .sort((a, b) => a.nombre.localeCompare(b.nombre))
+              .map((rubro) => (
+                <option key={rubro.id} value={rubro.id}>
+                  {rubro.nombre}
+                </option>
             ))}
             <option value="nuevo">+ Agregar nuevo rubro</option>
           </select>
