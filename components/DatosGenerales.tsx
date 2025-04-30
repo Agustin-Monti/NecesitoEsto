@@ -33,6 +33,11 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
   const [paises, setPaises] = useState<{ id: string; nombre: string }[]>([]);
   const [categorias, setCategorias] = useState<{ id: string; categoria: string }[]>([]);
   const [rubros, setRubros] = useState<{ id: string; nombre: string }[]>([]);
+  const [nuevaCategoria, setNuevaCategoria] = useState("");
+  const [mostrarInputCategoria, setMostrarInputCategoria] = useState(false);
+  const [nuevoRubro, setNuevoRubro] = useState("");
+  const [mostrarInputRubro, setMostrarInputRubro] = useState(false);
+
 
   useEffect(() => {
     setFormattedFecha(formatFecha(profile.created_at));
@@ -126,6 +131,15 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       Object.entries(profile).forEach(([key, value]) => {
         if (key !== "fecha_creacion" && key !== "id") formData.append(key, value as string);
       });
+
+      // AÑADIR esto:
+      if (mostrarInputCategoria) {
+        formData.append("nueva_categoria", nuevaCategoria);
+      }
+
+      if (mostrarInputRubro) {
+        formData.append("nuevo_rubro", nuevoRubro);
+      }
   
       const result = await updateProfileAction(formData);
       if (result.success) {
@@ -295,34 +309,74 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         <div className="flex flex-col mb-1">
           <label className="block mb-2 font-semibold">Categoria</label>
           <select
+            className="border border-slate-950 rounded-md p-3"
             value={profile.id_categoria}
-            onChange={(e) => setProfile({ ...profile, id_categoria: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            onChange={(e) => {
+              if (e.target.value === "nueva") {
+                setMostrarInputCategoria(true);
+                setProfile({ ...profile, id_categoria: "" });
+              } else {
+                setMostrarInputCategoria(false);
+                setProfile({ ...profile, id_categoria: e.target.value });
+              }
+            }}
           >
-            <option value="">Seleccione un país</option>
-            {categorias.map((categorias) => (
-              <option key={categorias.id} value={categorias.id}>
-                {categorias.categoria}
+            <option value="">Seleccione una categoría</option>
+            {categorias.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.categoria}
               </option>
             ))}
+            <option value="nueva">+ Agregar nueva categoría</option>
           </select>
+
+          {mostrarInputCategoria && (
+            <input
+              type="text"
+              placeholder="Nueva categoría"
+              value={nuevaCategoria}
+              onChange={(e) => setNuevaCategoria(e.target.value)}
+              className="border border-slate-950 rounded-md p-2 mt-2"
+            />
+          )}
+
         </div>
 
-        {/* Campo Pais */}
+        {/* Campo Rubro */}
         <div className="flex flex-col mb-1">
           <label className="block mb-2 font-semibold">Rubro</label>
           <select
+            className="border border-slate-950 rounded-md p-3"
             value={profile.rubro_id}
-            onChange={(e) => setProfile({ ...profile, rubro_id: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+            onChange={(e) => {
+              if (e.target.value === "nuevo") {
+                setMostrarInputRubro(true);
+                setProfile({ ...profile, rubro_id: "" });
+              } else {
+                setMostrarInputRubro(false);
+                setProfile({ ...profile, rubro_id: e.target.value });
+              }
+            }}
           >
-            <option value="">Seleccione un país</option>
-            {rubros.map((rubros) => (
-              <option key={rubros.id} value={rubros.id}>
-                {rubros.nombre}
+            <option value="">Seleccione un rubro</option>
+            {rubros.map((rubro) => (
+              <option key={rubro.id} value={rubro.id}>
+                {rubro.nombre}
               </option>
             ))}
+            <option value="nuevo">+ Agregar nuevo rubro</option>
           </select>
+
+          {mostrarInputRubro && (
+            <input
+              type="text"
+              placeholder="Nuevo rubro"
+              value={nuevoRubro}
+              onChange={(e) => setNuevoRubro(e.target.value)}
+              className="border border-slate-950 rounded-md p-2 mt-2"
+            />
+          )}
+
         </div>
       </div>
 
