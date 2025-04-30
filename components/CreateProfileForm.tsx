@@ -6,6 +6,7 @@ import { updateProfileAction, getPaises, getCategorias, getRubros } from "@/acti
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import AlertaBienvenida from "@/components/AlertaBienvenida";
 import Select from "react-select";
 
 export function InitialProfileForm() {
@@ -20,6 +21,7 @@ export function InitialProfileForm() {
   const [customCategoria, setCustomCategoria] = useState("");
   const [customRubro, setCustomRubro] = useState("");
   const router = useRouter();
+  const [showBienvenida, setShowBienvenida] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -33,7 +35,10 @@ export function InitialProfileForm() {
     pais_id: "",
     id_categoria: "",
     rubro: "",
+    nueva_categoria: "",
+    nuevo_rubro: "",
   });
+  
 
   useEffect(() => {
     getPaises().then(setPaises).catch(console.error);
@@ -53,13 +58,22 @@ export function InitialProfileForm() {
     Object.entries(formData).forEach(([key, value]) => {
       form.append(key, value);
     });
-
+  
+    // Agregar campos personalizados si fueron usados
+    if (isCustomCategoria && customCategoria) {
+      form.append("nueva_categoria", customCategoria);
+    }
+  
+    if (isCustomRubro && customRubro) {
+      form.append("nuevo_rubro", customRubro);
+    }
+  
     const result = await updateProfileAction(form);
-    
+  
     setStatus(result.success ? "success" : "destructive");
     setMessage(result.message);
     setShowAlert(true);
-
+  
     if (result.success) {
       setFormData({
         nombre: "",
@@ -74,9 +88,16 @@ export function InitialProfileForm() {
         pais_id: "",
         id_categoria: "",
         rubro: "",
+        nueva_categoria: "",
+        nuevo_rubro: "",
       });
+      setCustomCategoria("");
+      setCustomRubro("");
+      setIsCustomCategoria(false);
+      setIsCustomRubro(false);
     }
   };
+  
 
   return (
     <div className="max-w-2xl mx-auto p-6 mt-24 mb-32">
@@ -90,8 +111,17 @@ export function InitialProfileForm() {
           onClose={() => {
             setShowAlert(false);
             if (status === "success") {
-              router.push("/"); // redirige a la página principal
+              setShowBienvenida(true); // MOSTRAR CARTEL
             }
+          }}
+        />
+      )}
+
+      {showBienvenida && (
+        <AlertaBienvenida
+          onClose={() => {
+            setShowBienvenida(false);
+            // Aquí puedes hacer un redirect si querés: router.push("/") o similar
           }}
         />
       )}
@@ -236,7 +266,7 @@ export function InitialProfileForm() {
                       handleChange(e);
                     }
                   }}
-                  required
+                  required={!isCustomCategoria} // ← Aquí se desactiva el required si escribes una categoría nueva
                   className="w-full p-2 border border-solid border-slate-950"
                 >
                   <option value="">Selecciona una categoría</option>
@@ -248,15 +278,16 @@ export function InitialProfileForm() {
                   <option value="otro">Otro (Agregar nueva categoría)</option>
                 </select>
 
+                
                 {isCustomCategoria && (
                   <input
                     type="text"
                     placeholder="Ingrese nueva categoría"
-                    value={customCategoria}
-                    onChange={(e) => {
-                      setCustomCategoria(e.target.value);
-                      handleChange({ target: { name: "id_categoria", value: e.target.value } } as any);
-                    }}
+                    value={formData.nueva_categoria}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, nueva_categoria: e.target.value }))
+                    }
+                    required
                     className="border p-2 mb-2 mt-2 border-solid border-slate-950"
                   />
                 )}
@@ -280,7 +311,7 @@ export function InitialProfileForm() {
                         handleChange(e);
                       }
                     }}
-                    required
+                    required={!isCustomRubro}
                     className="w-full p-2 border border-solid border-slate-950"
                   >
                   <option value="">Selecciona un rubro</option>
@@ -292,15 +323,16 @@ export function InitialProfileForm() {
                   <option value="otro">Otro (Agregar nuevo rubro)</option>
                 </select>
 
+                
                 {isCustomRubro && (
                   <input
                     type="text"
                     placeholder="Ingrese nuevo rubro"
-                    value={customRubro}
-                    onChange={(e) => {
-                      setCustomRubro(e.target.value);
-                      handleChange({ target: { name: "rubro", value: e.target.value } } as any);
-                    }}
+                    value={formData.nuevo_rubro}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, nuevo_rubro: e.target.value }))
+                    }
+                    required
                     className="border p-2 mb-2 mt-2 border-solid border-slate-950"
                   />
                 )}
