@@ -210,6 +210,17 @@ export function InitialProfileForm() {
             required
           />
 
+            <div>
+              <Label htmlFor="municipio">Municipio*</Label>
+              <Input
+                id="municipio"
+                name="municipio"
+                value={formData.municipio}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="provincia">Provincia*</Label>
