@@ -143,16 +143,25 @@ export function CreateDemandForm() {
     const fetchCategorias = async () => {
       try {
         const categoriasData = await getCategorias();
-        setCategorias(categoriasData);
+        // Ordenar alfabeticamente por la propiedad 'categoria'
+        const categoriasOrdenadas = categoriasData.sort((a, b) =>
+          a.categoria.localeCompare(b.categoria)
+        );
+        setCategorias(categoriasOrdenadas);
       } catch (error) {
         console.error("Error al obtener categorías:", error);
       }
     };
+    
 
     const fetchRubros = async () => {
       try {
         const rubrosData = await getRubros();
-        setRubros(rubrosData);
+        // Ordenar alfabeticamente por la propiedad 'nombre'
+        const rubrosOrdenados = rubrosData.sort((a, b) =>
+          a.nombre.localeCompare(b.nombre)
+        );
+        setRubros(rubrosOrdenados);
       } catch (error) {
         console.error("Error al obtener rubros:", error);
       }
