@@ -20,6 +20,7 @@ export function InitialProfileForm() {
   const [isCustomRubro, setIsCustomRubro] = useState(false);
   const [customCategoria, setCustomCategoria] = useState("");
   const [customRubro, setCustomRubro] = useState("");
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const router = useRouter();
   const [showBienvenida, setShowBienvenida] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,15 +52,27 @@ export function InitialProfileForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+  
+    if (!aceptaTerminos) {
+      setStatus("destructive");
+      setMessage("Debes aceptar los términos y condiciones para continuar.");
+      setShowAlert(true);
+      return; // ← Evita que el formulario se envíe
+    }
+  
     const form = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       form.append(key, value);
     });
   
-    // Agregar campos personalizados si fueron usados
     if (isCustomCategoria && customCategoria) {
       form.append("nueva_categoria", customCategoria);
     }
@@ -67,6 +80,17 @@ export function InitialProfileForm() {
     if (isCustomRubro && customRubro) {
       form.append("nuevo_rubro", customRubro);
     }
+  
+    form.append("terminos", "1");
+
+    // Convertir FormData a un objeto simple para mostrarlo en la consola
+    const formObj: any = {};
+    form.forEach((value, key) => {
+      formObj[key] = value;
+    });
+
+    // Mostrar el objeto con los datos
+    console.log("Datos enviados al servidor: ", formObj);
   
     const result = await updateProfileAction(form);
   
@@ -89,14 +113,16 @@ export function InitialProfileForm() {
         id_categoria: "",
         rubro: "",
         nueva_categoria: "",
-        nuevo_rubro: "",
+        nuevo_rubro: ""
       });
       setCustomCategoria("");
       setCustomRubro("");
       setIsCustomCategoria(false);
       setIsCustomRubro(false);
+      setAceptaTerminos(false);
     }
   };
+  
   
 
   return (
@@ -162,6 +188,8 @@ export function InitialProfileForm() {
                 required
               />
             </div>
+
+            
           </div>
 
           {/* Columna 2 */}
@@ -354,6 +382,23 @@ export function InitialProfileForm() {
                   />
                 )}
             </div>
+
+            {/* Checkbox Términos y Condiciones */}
+            <div className="flex items-center space-x-2 mt-6">
+              <input
+                id="terminos"
+                type="checkbox"
+                checked={aceptaTerminos}
+                onChange={(e) => setAceptaTerminos(e.target.checked)}
+                className="w-4 h-4"
+                required
+              />
+              <Label htmlFor="terminos">
+                Acepto los <a href="/terminos" className="text-blue-600 underline" target="_blank">Términos y Condiciones</a> *
+              </Label>
+            </div>
+
+
         </div>
 
         <button
