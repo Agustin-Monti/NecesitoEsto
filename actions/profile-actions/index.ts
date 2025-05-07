@@ -65,6 +65,7 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
     pais_id: formData.get("pais_id") as string,
     id_categoria: categoria_id,
     rubro_id: rubro_id,
+    terminos: formData.get("terminos") === "1",
   };
 
   try {
