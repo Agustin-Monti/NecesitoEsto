@@ -13,6 +13,7 @@ import "react-date-picker/dist/DatePicker.css";
 import "react-calendar/dist/Calendar.css";
 import { useRouter } from "next/navigation";
 
+
 // Carga dinámica del DatePicker para evitar problemas SSR
 const DatePicker  = dynamic(
   () => import('react-date-picker').then((mod) => mod.default),
@@ -55,6 +56,7 @@ export function CreateDemandForm() {
   const [isCustomCategoria, setIsCustomCategoria] = useState(false);
   const [customRubro, setCustomRubro] = useState("");
   const [isCustomRubro, setIsCustomRubro] = useState(false);
+  const [checkedTerminos, setCheckedTerminos] = useState(false);
   const router = useRouter();
 
 
@@ -99,6 +101,10 @@ export function CreateDemandForm() {
           console.error("Error fetching profile:", profileError);
         } else {
           setProfile(profileData || {});
+
+          // Verificar el estado de los términos y condiciones
+          const isTerminosAceptados = profileData?.terminos === true;
+          setCheckedTerminos(isTerminosAceptados);
   
           // 2. Obtener el nombre del país SOLO si el perfil tiene pais_id
           let nombrePais = "País no especificado";
@@ -166,6 +172,7 @@ export function CreateDemandForm() {
         console.error("Error al obtener rubros:", error);
       }
     };
+    
 
     fetchRubros();
     fetchPaises();
@@ -176,6 +183,22 @@ export function CreateDemandForm() {
   if (loading) {
     return <p className="text-2xl font-bold mb-4 text-black text-center">Cargando Formulario de Crear Necesidad...</p>;
   }
+
+  const isVencimientoValido = () => {
+    const inicio = new Date(demand.fecha_inicio);
+    const vencimiento = new Date(demand.fecha_vencimiento);
+  
+    // Diferencia en milisegundos
+    const diff = vencimiento.getTime() - inicio.getTime();
+    const diffDias = diff / (1000 * 60 * 60 * 24); // Convertir a días
+  
+    return diffDias >= 30;
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCheckedTerminos(e.target.checked);
+  };
+  
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -205,6 +228,21 @@ export function CreateDemandForm() {
     e.preventDefault();
     setStatus(null);
     setSuccess(null);
+
+
+    // Validar si el checkbox de términos y condiciones está marcado
+    if (!checkedTerminos) {
+      setStatus("error");
+      setSuccess("Debes aceptar los términos y condiciones para poder crear la demanda.");
+      return;
+    }
+
+    // Validar la fecha de vencimiento
+    if (!isVencimientoValido()) {
+      setStatus("error");
+      setSuccess("La fecha de vencimiento debe ser al menos 30 días después de la fecha de inicio.");
+      return;
+    }
 
     try {
       const response: CreateDemandResponse = await createDemandAction(demand);
@@ -273,7 +311,7 @@ export function CreateDemandForm() {
           <Input
             className="border border-solid border-slate-950"
             name="empresa"
-            value={demand.empresa}
+            value={demand.empresa || "Completar datos de perfil para que aparezcan aquí"}
             readOnly 
           />
 
@@ -288,7 +326,7 @@ export function CreateDemandForm() {
           <Label htmlFor="responsable_solicitud">Responsable de la solicitud</Label>
           <Input
             name="responsable_solicitud"            
-            value={demand.responsable_solicitud}
+            value={demand.responsable_solicitud || "Completar datos de perfil para que aparezcan aquí"}
             readOnly 
             className="border border-solid border-slate-950"
           />
@@ -297,7 +335,7 @@ export function CreateDemandForm() {
           <Input
             name="email_contacto"
             type="email"
-            value={profile?.email || ""}
+            value={profile?.email || "Completar datos de perfil para que aparezcan aquí"}
             readOnly 
             className="border border-solid border-slate-950"
           />
@@ -306,7 +344,7 @@ export function CreateDemandForm() {
           <Input
             name="telefono"
             type="tel"
-            value={demand.telefono}
+            value={demand.telefono || "Completar datos de perfil para que aparezcan aquí"}
             readOnly 
             className="border border-solid border-slate-950"
           />
@@ -320,10 +358,12 @@ export function CreateDemandForm() {
 
           <Label htmlFor="fecha_vencimiento">Fecha de vencimiento</Label>
           <DatePicker
-            onChange={(date) => handleDemandChange("fecha_vencimiento", date)}
+            onChange={(value) => handleDemandChange("fecha_vencimiento", value)}
             value={demand.fecha_vencimiento ? new Date(demand.fecha_vencimiento) : null}
-            className="border border-solid border-slate-950"
+            className="border"
+            minDate={demand.fecha_inicio ? new Date(new Date(demand.fecha_inicio).getTime() + 30 * 24 * 60 * 60 * 1000) : new Date()}
           />
+
 
           <Label htmlFor="id_categoria">Categoría <strong className="text-gray-400 text-x">(Selecciona o crea una nueva)</strong></Label>
           <Select
@@ -404,6 +444,24 @@ export function CreateDemandForm() {
             className="border border-solid border-slate-950"
             rows={4}
           />
+
+          {/* Checkbox para términos y condiciones */}
+          <div className="mb-4">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="terminos"
+                disabled={profile?.terminos === true} // Deshabilitar si ya está marcado
+                checked={checkedTerminos}
+                onChange={handleCheckboxChange}
+              />
+              <Label htmlFor="terminos">
+                Acepto los <a href="/terminos" className="text-blue-600 underline" target="_blank">términos y condiciones</a>
+              </Label>
+            </label>
+          </div>
+
+          
 
           <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4 mb-2">
             Crear Demanda
