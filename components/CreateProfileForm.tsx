@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import AlertaBienvenida from "@/components/AlertaBienvenida";
+import { createClient } from "@/utils/supabase/client";
 import Select from "react-select";
 
 export function InitialProfileForm() {
@@ -120,6 +121,33 @@ export function InitialProfileForm() {
       setIsCustomCategoria(false);
       setIsCustomRubro(false);
       setAceptaTerminos(false);
+    }
+
+    // Llamar a la API de bienvenida
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user?.email) {
+        console.error("No se pudo obtener el email del usuario.");
+        return;
+      }
+
+      const email = user.email;
+
+      await fetch('/api/bienvenida', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: formObj.nombre,
+          email: email,
+        }),
+      });
+    } catch (error) {
+      console.error("Error al enviar correo de bienvenida:", error);
     }
   };
   
