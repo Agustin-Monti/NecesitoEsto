@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 export default function WhatsappButton() {
   const [isVisible, setIsVisible] = useState(true); // Estado para controlar la visibilidad
-  const phoneNumber = "1234567890"; // Reemplaza con tu número de WhatsApp
-  const message = encodeURIComponent("¡Hola! Me gustaría obtener más información."); // Mensaje predeterminado
+  const phoneNumber = "5491155939008"; // Reemplaza con tu número de WhatsApp
+  const message = encodeURIComponent("¡Hola! Me gustaría obtener más información sobre Necesito Esto!."); // Mensaje predeterminado
 
   useEffect(() => {
     const handleScroll = () => {
