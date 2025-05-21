@@ -37,6 +37,9 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
   const [mostrarInputCategoria, setMostrarInputCategoria] = useState(false);
   const [nuevoRubro, setNuevoRubro] = useState("");
   const [mostrarInputRubro, setMostrarInputRubro] = useState(false);
+  const [nuevoPais, setNuevoPais] = useState("");
+  const [mostrarInputPais, setMostrarInputPais] = useState(false);
+
 
 
   useEffect(() => {
@@ -140,6 +143,11 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       if (mostrarInputRubro) {
         formData.append("nuevo_rubro", nuevoRubro);
       }
+
+      if (mostrarInputPais) {
+        formData.append("nuevo_pais", nuevoPais);
+      }
+
   
       const result = await updateProfileAction(formData);
       if (result.success) {
@@ -225,19 +233,48 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         {/* Campo Pais */}
         <div className="flex flex-col mb-1">
           <label className="block mb-2 font-semibold">País</label>
-          <select
-            value={profile.pais_id}
-            onChange={(e) => setProfile({ ...profile, pais_id: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          >
-            <option value="">Seleccione un país</option>
-            {paises.map((pais) => (
-              <option key={pais.id} value={pais.id}>
-                {pais.nombre}
-              </option>
-            ))}
-          </select>
+          {!mostrarInputPais ? (
+            <>
+              <select
+                value={profile.pais_id}
+                onChange={(e) => setProfile({ ...profile, pais_id: e.target.value })}
+                className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+              >
+                <option value="">Seleccione un país</option>
+                {paises.map((pais) => (
+                  <option key={pais.id} value={pais.id}>
+                    {pais.nombre}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setMostrarInputPais(true)}
+                className="mt-2 text-blue-500 text-sm underline"
+              >
+                ¿No está en la lista? Agregar nuevo país
+              </button>
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={nuevoPais}
+                onChange={(e) => setNuevoPais(e.target.value)}
+                placeholder="Escriba el nuevo país"
+                className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarInputPais(false)}
+                className="mt-2 text-blue-500 text-sm underline"
+              >
+                Cancelar
+              </button>
+            </>
+          )}
         </div>
+
 
         {/* Campo Provincia */}
         <div className="flex flex-col mb-1">
