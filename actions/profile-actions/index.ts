@@ -16,6 +16,30 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
     return { success: false, message: "Usuario no autenticado" };
   }
 
+  // Procesar pais
+
+  let pais_id = formData.get("pais_id") as string;
+  const nuevoPais = formData.get("nuevo_pais") as string;
+
+  if (pais_id === "otro" && nuevoPais) {
+    // Insertar el nuevo país
+    const { data: paisData, error: paisError } = await supabase
+      .from("pais")
+      .insert({ nombre: nuevoPais })
+      .select("id")
+      .single();
+
+    if (paisError || !paisData) {
+      return {
+        success: false,
+        message: "Error al guardar el nuevo país.",
+      };
+    }
+
+    // Reemplazar el pais_id con el ID recién creado
+    pais_id = paisData.id;
+  }
+
   // Procesar categoría
   let categoria_id = formData.get("id_categoria") as string;
   const nueva_categoria = formData.get("nueva_categoria") as string;
@@ -62,7 +86,7 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
     direccion: formData.get("direccion") as string,
     telefono: formData.get("telefono") as string,
     empresa: formData.get("empresa") as string,
-    pais_id: formData.get("pais_id") as string,
+    pais_id: pais_id,
     id_categoria: categoria_id,
     rubro_id: rubro_id,
     terminos: formData.get("terminos") === "1",
