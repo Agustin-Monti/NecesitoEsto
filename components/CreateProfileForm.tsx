@@ -22,6 +22,9 @@ export function InitialProfileForm() {
   const [customCategoria, setCustomCategoria] = useState("");
   const [customRubro, setCustomRubro] = useState("");
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [isCustomPais, setIsCustomPais] = useState(false);
+  const [customPais, setCustomPais] = useState("");
+
   const router = useRouter();
   const [showBienvenida, setShowBienvenida] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,6 +42,7 @@ export function InitialProfileForm() {
     rubro: "",
     nueva_categoria: "",
     nuevo_rubro: "",
+    nuevo_pais: "",
   });
   
 
@@ -81,6 +85,11 @@ export function InitialProfileForm() {
     if (isCustomRubro && customRubro) {
       form.append("nuevo_rubro", customRubro);
     }
+
+    if (isCustomPais && customPais) {
+      form.append("nuevo_pais", customPais);
+    }
+
   
     form.append("terminos", "1");
 
@@ -114,12 +123,15 @@ export function InitialProfileForm() {
         id_categoria: "",
         rubro: "",
         nueva_categoria: "",
-        nuevo_rubro: ""
+        nuevo_rubro: "",
+        nuevo_pais: "",
       });
       setCustomCategoria("");
       setCustomRubro("");
+      setCustomPais("");
       setIsCustomCategoria(false);
       setIsCustomRubro(false);
+      setIsCustomPais(false);
       setAceptaTerminos(false);
     }
 
@@ -228,7 +240,11 @@ export function InitialProfileForm() {
                 id="pais_id"
                 name="pais_id"
                 value={formData.pais_id}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setIsCustomPais(value === "otro");
+                  setFormData(prev => ({ ...prev, pais_id: value }));
+                }}
                 required
                 className="w-full p-2 border rounded-md"
               >
@@ -238,8 +254,26 @@ export function InitialProfileForm() {
                     {pais.nombre}
                   </option>
                 ))}
+                <option value="otro">Otro...</option>
               </select>
+
+              {isCustomPais && (
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    placeholder="Ingrese nuevo pais"
+                    value={formData.nuevo_pais}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, nuevo_pais: e.target.value }))
+                    }
+                    required
+                    className="border p-2 mb-2 mt-2 border-solid border-slate-950"
+                  />
+                </div>
+              )}
+
             </div>
+
 
             <div>
               <Label htmlFor="telefono">Teléfono*</Label>
