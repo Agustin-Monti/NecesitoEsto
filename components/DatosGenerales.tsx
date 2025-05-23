@@ -26,6 +26,10 @@ interface DatosGeneralesProps {
 }
 
 const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
+  const sanitizedData = {
+    ...data,
+    pais_id: data.pais_id ?? "", // Si es null o undefined, usa ""
+  };
   const [profile, setProfile] = useState<Profile>(data);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -130,12 +134,30 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
 
   const handleSave = async () => {
     try {
+      const supabase = createClient();
+
+      // 👇 Si se mostró el input y se ingresó un nuevo país
+      if (mostrarInputPais && nuevoPais.trim() !== "") {
+        const { data: nuevoPaisData, error: errorInsertPais } = await supabase
+          .from("pais")
+          .insert({ nombre: nuevoPais.trim() })
+          .select("id")
+          .single();
+
+        if (errorInsertPais) {
+          setError("Error al insertar nuevo país: " + errorInsertPais.message);
+          return;
+        }
+
+        // Actualizar el profile con el nuevo país insertado
+        setProfile((prev) => ({ ...prev, pais_id: nuevoPaisData.id }));
+      }
+
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (key !== "fecha_creacion" && key !== "id") formData.append(key, value as string);
       });
 
-      // AÑADIR esto:
       if (mostrarInputCategoria) {
         formData.append("nueva_categoria", nuevaCategoria);
       }
@@ -144,16 +166,12 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         formData.append("nuevo_rubro", nuevoRubro);
       }
 
-      if (mostrarInputPais) {
-        formData.append("nuevo_pais", nuevoPais);
-      }
-
-  
       const result = await updateProfileAction(formData);
+      console.log("Respuesta del backend:", result);
+
       if (result.success) {
         setSuccess(true);
         setError(null);
-        // Llamar a la función para enviar el correo
         await sendProfileUpdateEmail();
       }
     } catch (err: any) {
@@ -161,6 +179,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       setSuccess(false);
     }
   };
+
 
   const formatFecha = (fecha: string | undefined | null): string => {
     if (!fecha) {
@@ -233,11 +252,17 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         {/* Campo Pais */}
         <div className="flex flex-col mb-1">
           <label className="block mb-2 font-semibold">País</label>
-          {!mostrarInputPais ? (
-            <>
               <select
                 value={profile.pais_id}
-                onChange={(e) => setProfile({ ...profile, pais_id: e.target.value })}
+                onChange={(e) => {
+                  if (e.target.value === "nueva") {
+                    setMostrarInputPais(true);
+                    setProfile({ ...profile, pais_id: "" });
+                  } else {
+                    setMostrarInputPais(false);
+                    setProfile({ ...profile, pais_id: e.target.value });
+                  }
+                }}
                 className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
               >
                 <option value="">Seleccione un país</option>
@@ -246,33 +271,18 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                     {pais.nombre}
                   </option>
                 ))}
+                <option value="nueva">+ Agregar nuevo pais</option>
               </select>
-              <button
-                type="button"
-                onClick={() => setMostrarInputPais(true)}
-                className="mt-2 text-blue-500 text-sm underline"
-              >
-                ¿No está en la lista? Agregar nuevo país
-              </button>
-            </>
-          ) : (
-            <>
+
+            {mostrarInputPais && (
               <input
                 type="text"
                 value={nuevoPais}
                 onChange={(e) => setNuevoPais(e.target.value)}
-                placeholder="Escriba el nuevo país"
-                className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
+                placeholder="Nuevo país"
+                className="border border-slate-950 rounded-md p-3 shadow-sm mt-2 focus:outline-none focus:ring focus:ring-blue-500 transition"
               />
-              <button
-                type="button"
-                onClick={() => setMostrarInputPais(false)}
-                className="mt-2 text-blue-500 text-sm underline"
-              >
-                Cancelar
-              </button>
-            </>
-          )}
+            )}
         </div>
 
 
