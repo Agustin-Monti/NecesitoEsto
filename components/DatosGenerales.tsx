@@ -30,7 +30,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
     ...data,
     pais_id: data.pais_id ?? "", // Si es null o undefined, usa ""
   };
-  const [profile, setProfile] = useState<Profile>(data);
+  const [profile, setProfile] = useState<Profile>(sanitizedData);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [formattedFecha, setFormattedFecha] = useState<string>("");
@@ -253,7 +253,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         <div className="flex flex-col mb-1">
           <label className="block mb-2 font-semibold">País</label>
               <select
-                value={profile.pais_id}
+                value={profile.pais_id || ""}
                 onChange={(e) => {
                   if (e.target.value === "nueva") {
                     setMostrarInputPais(true);
@@ -357,7 +357,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
           <label className="block mb-2 font-semibold">Categoria</label>
           <select
             className="border border-slate-950 rounded-md p-3"
-            value={profile.id_categoria}
+            value={profile.id_categoria || ""}
             onChange={(e) => {
               if (e.target.value === "nueva") {
                 setMostrarInputCategoria(true);
