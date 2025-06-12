@@ -7,9 +7,12 @@
     },
     {
       "path": "/api/eliminarDemanda",
-      "schedule": "0 9 * * *"  
+      "schedule": "0 9 * * *"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "NPM_CONFIG_REGISTRY": "https://registry.npmmirror.com"
+    }
+  }
 }
-
-
