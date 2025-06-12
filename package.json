@@ -17,6 +17,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@wojtekmaj/date-utils": "^2.0.2",
     "autoprefixer": "10.4.17",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
