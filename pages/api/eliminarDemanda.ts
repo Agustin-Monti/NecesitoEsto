@@ -13,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const today = new Date();
-  const twoDaysAgo = new Date();
-  twoDaysAgo.setDate(today.getDate() - 2);
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(today.getMonth() - 1);
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: demandasVencidas, error: fetchError } = await supabase
     .from('demandas')
     .select('id, detalle, fecha_vencimiento, email_contacto')
-    .lt('fecha_vencimiento', formatDate(twoDaysAgo));
+    .lt('fecha_vencimiento', formatDate(oneMonthAgo))
 
   if (fetchError) {
     console.error('Error al obtener demandas vencidas:', fetchError);
