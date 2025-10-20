@@ -59,6 +59,37 @@ export function CreateDemandForm() {
   const [checkedTerminos, setCheckedTerminos] = useState(false);
   const router = useRouter();
 
+  // Función para obtener la fecha actual en Argentina (solución directa)
+  const obtenerFechaArgentina = () => {
+    // Usar la fecha local del navegador (ya está en la zona horaria del usuario)
+    const ahora = new Date();
+    
+    // Para Argentina, simplemente usar la fecha local
+    const año = ahora.getFullYear();
+    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+    const dia = String(ahora.getDate()).padStart(2, '0');
+    
+    return `${año}-${mes}-${dia}`;
+  };
+
+  // Función para calcular fechas automáticamente
+  const calcularFechas = () => {
+    const fechaInicio = obtenerFechaArgentina();
+    
+    // Calcular vencimiento (7 días después)
+    const fechaInicioObj = new Date(fechaInicio);
+    const fechaVencimientoObj = new Date(fechaInicioObj);
+    fechaVencimientoObj.setDate(fechaVencimientoObj.getDate() + 7);
+    
+    const añoVenc = fechaVencimientoObj.getFullYear();
+    const mesVenc = String(fechaVencimientoObj.getMonth() + 1).padStart(2, '0');
+    const diaVenc = String(fechaVencimientoObj.getDate()).padStart(2, '0');
+    
+    return {
+      inicio: fechaInicio,
+      vencimiento: `${añoVenc}-${mesVenc}-${diaVenc}`
+    };
+  };
 
   useEffect(() => {
     console.log("Estado actualizado:", status, success);
@@ -105,6 +136,9 @@ export function CreateDemandForm() {
           // Verificar el estado de los términos y condiciones
           const isTerminosAceptados = profileData?.terminos === true;
           setCheckedTerminos(isTerminosAceptados);
+
+          // Calcular fechas automáticamente
+          const fechas = calcularFechas();
   
           // 2. Obtener el nombre del país SOLO si el perfil tiene pais_id
           let nombrePais = "País no especificado";
@@ -129,8 +163,16 @@ export function CreateDemandForm() {
             telefono: profileData.telefono || "",
             empresa: profileData.empresa || "",
             pais_id: profileData.pais_id || "",
-            nombre_pais: nombrePais, // Nuevo campo para mostrar el nombre
+            nombre_pais: nombrePais,
+            fecha_inicio: fechas.inicio,
+            fecha_vencimiento: fechas.vencimiento
           }));
+
+          console.log("Fechas calculadas:", {
+            inicio: fechas.inicio,
+            vencimiento: fechas.vencimiento,
+            fechaActual: new Date().toLocaleDateString('es-AR')
+          });
         }
         setUser(user);
       }
@@ -149,7 +191,6 @@ export function CreateDemandForm() {
     const fetchCategorias = async () => {
       try {
         const categoriasData = await getCategorias();
-        // Ordenar alfabeticamente por la propiedad 'categoria'
         const categoriasOrdenadas = categoriasData.sort((a, b) =>
           a.categoria.localeCompare(b.categoria)
         );
@@ -163,7 +204,6 @@ export function CreateDemandForm() {
     const fetchRubros = async () => {
       try {
         const rubrosData = await getRubros();
-        // Ordenar alfabeticamente por la propiedad 'nombre'
         const rubrosOrdenados = rubrosData.sort((a, b) =>
           a.nombre.localeCompare(b.nombre)
         );
@@ -184,17 +224,6 @@ export function CreateDemandForm() {
     return <p className="text-2xl font-bold mb-4 text-black text-center">Cargando Formulario de Crear Necesidad...</p>;
   }
 
-  const isVencimientoValido = () => {
-    const inicio = new Date(demand.fecha_inicio);
-    const vencimiento = new Date(demand.fecha_vencimiento);
-  
-    // Diferencia en milisegundos
-    const diff = vencimiento.getTime() - inicio.getTime();
-    const diffDias = diff / (1000 * 60 * 60 * 24); // Convertir a días
-  
-    return diffDias >= 30;
-  };
-
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCheckedTerminos(e.target.checked);
   };
@@ -213,7 +242,6 @@ export function CreateDemandForm() {
   const handleDemandChange = (key: string, value: any) => {
     let formattedValue = value;
 
-    // Si el valor es un objeto Date, conviértelo a una cadena en formato YYYY-MM-DD
     if (value instanceof Date) {
       formattedValue = value.toISOString().split("T")[0];
     }
@@ -229,18 +257,9 @@ export function CreateDemandForm() {
     setStatus(null);
     setSuccess(null);
 
-
-    // Validar si el checkbox de términos y condiciones está marcado
     if (!checkedTerminos) {
       setStatus("error");
       setSuccess("Debes aceptar los términos y condiciones para poder crear la demanda.");
-      return;
-    }
-
-    // Validar la fecha de vencimiento
-    if (!isVencimientoValido()) {
-      setStatus("error");
-      setSuccess("La fecha de vencimiento debe ser al menos 30 días después de la fecha de inicio.");
       return;
     }
 
@@ -255,9 +274,8 @@ export function CreateDemandForm() {
           "En unos minutos recibirá un correo electrónico con el resultado de la evaluación."
         );
 
-        // Redirigir después de 2.5 segundos
         setTimeout(() => {
-          router.push("/demandas"); // Ajusta esta ruta a donde quieres llevar al usuario
+          router.push("/demandas");
         }, 2500);
       } else {
         setStatus("error");
@@ -268,6 +286,19 @@ export function CreateDemandForm() {
       setSuccess("Hubo un problema al procesar la solicitud.");
       console.error("Error en la solicitud:", error);
     }
+  };
+
+  // Función para formatear fecha en formato argentino
+  const formatearFecha = (fecha: string) => {
+    const [año, mes, dia] = fecha.split('-');
+    const fechaObj = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+    
+    return fechaObj.toLocaleDateString('es-AR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -349,21 +380,35 @@ export function CreateDemandForm() {
             className="border border-solid border-slate-950"
           />
 
-          <Label htmlFor="fecha_inicio">Fecha de inicio</Label>
-          <DatePicker
-            onChange={(date) => handleDemandChange("fecha_inicio", date)}
-            value={demand.fecha_inicio ? new Date(demand.fecha_inicio) : null}
-            className="border border-solid border-slate-950"
-          />
-
-          <Label htmlFor="fecha_vencimiento">Fecha de vencimiento</Label>
-          <DatePicker
-            onChange={(value) => handleDemandChange("fecha_vencimiento", value)}
-            value={demand.fecha_vencimiento ? new Date(demand.fecha_vencimiento) : null}
-            className="border"
-            minDate={demand.fecha_inicio ? new Date(new Date(demand.fecha_inicio).getTime() + 30 * 24 * 60 * 60 * 1000) : new Date()}
-          />
-
+          {/* Mostrar fechas automáticas (solo lectura) */}
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-800 mb-2">Fechas automáticas de la demanda:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="fecha_inicio" className="text-blue-700">Fecha de inicio</Label>
+                <Input
+                  name="fecha_inicio"
+                  value={formatearFecha(demand.fecha_inicio)}
+                  readOnly
+                  className="border border-blue-300 bg-white font-medium"
+                />
+                <p className="text-sm text-blue-600 mt-1">Fecha automática de creación</p>
+              </div>
+              <div>
+                <Label htmlFor="fecha_vencimiento" className="text-blue-700">Fecha de vencimiento</Label>
+                <Input
+                  name="fecha_vencimiento"
+                  value={formatearFecha(demand.fecha_vencimiento)}
+                  readOnly
+                  className="border border-blue-300 bg-white font-medium"
+                />
+                <p className="text-sm text-blue-600 mt-1">Vence 1 semana después de la creación</p>
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-blue-600">
+              <strong>Fechas en base de datos:</strong> {demand.fecha_inicio} / {demand.fecha_vencimiento}
+            </div>
+          </div>
 
           <Label htmlFor="id_categoria">Categoría <strong className="text-gray-400 text-x">(Selecciona o crea una nueva)</strong></Label>
           <Select
@@ -451,7 +496,7 @@ export function CreateDemandForm() {
               <input
                 type="checkbox"
                 id="terminos"
-                disabled={profile?.terminos === true} // Deshabilitar si ya está marcado
+                disabled={profile?.terminos === true}
                 checked={checkedTerminos}
                 onChange={handleCheckboxChange}
               />
@@ -460,8 +505,6 @@ export function CreateDemandForm() {
               </Label>
             </label>
           </div>
-
-          
 
           <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4 mb-2">
             Crear Demanda
