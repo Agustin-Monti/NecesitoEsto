@@ -6,20 +6,21 @@ import { useDebouncedCallback } from 'use-debounce';
 
 interface SearchProps {
   placeholder: string;
-  handleSearch: (term: string) => void;  // Accept the handleSearch function as a prop
+  handleSearch: (term: string) => void;
 }
 
 export default function Search({ placeholder, handleSearch }: SearchProps) {
-  const searchParams:any = useSearchParams();
+  const searchParams: any = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
   
   return (
     <div className="relative flex flex-1 flex-shrink-0">
-      <label htmlFor="search" className="sr-only">
-        Buscar Nesecidad...
+      <label htmlFor="search-input" className="sr-only">
+        {placeholder}
       </label>
       <input
+        id="search-input" // ✅ AGREGAR ESTE ID
         className="peer block w-full py-[9px] pl-10 text-sm placeholder:text-black bg-white border rounded-lg"
         placeholder={placeholder}
         onChange={(e) => {
