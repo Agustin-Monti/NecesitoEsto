@@ -26,6 +26,13 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
   const [ordenId, setOrdenId] = useState('');
   const searchParams = useSearchParams();
 
+  // Estado para controlar la hidratación
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const abrirModal = (demanda: any) => {
     setDemandaSeleccionada(demanda);
     setModalOpen(true);
@@ -117,10 +124,41 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     setOrdenId('');
     setFilteredDemandas(demandas);
   };
+
+  // Render simplificado para servidor
+  if (!isMounted) {
+    return (
+      <div className="mb-4 mt-[6rem] lg:mt-40">
+        {/* Filtros simplificados para SSR */}
+        <div className="hidden lg:flex lg:items-center lg:justify-between gap-6 mb-6">
+          <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
+            <div className="react-select__placeholder">Seleccionar Categoría</div>
+          </div>
+          <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
+            <div className="react-select__placeholder">Seleccionar Rubro</div>
+          </div>
+          <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
+            <div className="react-select__placeholder">Ordenar por</div>
+          </div>
+          <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
+            <Search
+              placeholder="Buscar Necesidades..."
+              handleSearch={setSearchQuery}
+            />
+          </div>
+        </div>
+        {/* Loading state para las demandas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="animate-pulse bg-gray-200 rounded-lg p-6 h-40"></div>
+          <div className="animate-pulse bg-gray-200 rounded-lg p-6 h-40"></div>
+        </div>
+      </div>
+    );
+  }
   
 
   return (
-    <div className="mb-4 mt-[6rem] lg:mt-40"> {/* Margen superior en móvil y desktop */}
+    <div className="mb-4 mt-[6rem] lg:mt-40">
       {/* Botón para mostrar/ocultar filtros en móvil */}
       <button
         onClick={() => setShowFilters(!showFilters)}
@@ -133,6 +171,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       <div className={`${showFilters ? 'block' : 'hidden'} lg:flex lg:items-center lg:justify-between gap-6 mb-6`}>
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Select
+            instanceId="categoria-select" // ID fijo para SSR
             options={categorias
               .slice()
               .sort((a, b) => a.categoria.localeCompare(b.categoria))
@@ -158,6 +197,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Select
+            instanceId="rubro-select" // ID fijo para SSR
             options={rubros.map((rubro) => ({
               value: rubro.id,
               label: rubro.nombre,
@@ -170,11 +210,13 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
             placeholder="Seleccionar Rubro"
             isClearable
             className="react-select-container"
+            classNamePrefix="react-select"
           />
         </div>
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Select
+            instanceId="ordenar-select" // ID fijo para SSR
             options={[
               { value: '', label: 'Ordenar por' },
               { value: 'desc', label: 'Más antiguas primero' },
@@ -185,16 +227,15 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
               setOrdenId(value);
               setTimeout(() => {
                 aplicarFiltros(demandas);
-              }, 0); // Esto fuerza a aplicar filtros después del cambio de estado
+              }, 0);
             }}
             value={ordenId ? { value: ordenId, label: ordenId === 'asc' ? 'Más recientes primero' : 'Más antiguas primero' } : null}
             placeholder="Ordenar por"
             className="react-select-container"
+            classNamePrefix="react-select"
             isClearable
           />
         </div>
-
-
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Search
