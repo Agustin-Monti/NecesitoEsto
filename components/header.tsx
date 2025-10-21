@@ -34,7 +34,7 @@ export const Header = ({ user }: { user: any }) => {
         {/* Navegación para desktop (iconos con nombres y FloatingButton dentro del nav) */}
         <div className="hidden md:flex md:justify-center md:items-center md:gap-8">
           <nav>
-            <ul className="flex gap-8">
+            <ul className="flex gap-8 items-center"> {/* Agregué items-center aquí */}
               <li className="flex flex-col items-center cursor-pointer">
                 <Link className="ito" href="/">
                   <HomeIcon className="w-6 h-6 mx-auto" />
@@ -60,7 +60,7 @@ export const Header = ({ user }: { user: any }) => {
                 </Link>
               </li>
               {/* FloatingButton dentro del nav en desktop */}
-              <li className="flex flex-col items-center cursor-pointer">
+              <li className="flex flex-col items-center">
                 <FloatingButton />
               </li>
             </ul>
@@ -110,8 +110,8 @@ export const Header = ({ user }: { user: any }) => {
         </nav>
       </div>
 
-      {/* Botón flotante (solo en móvil) */}
-      <div className="fixed bottom-20 rigth-4 md:hidden hidden">
+      {/* Botón flotante (solo en móvil) - VERSIÓN CORREGIDA */}
+      <div className="fixed md:hidden">
         <FloatingButton />
       </div>
     </header>
