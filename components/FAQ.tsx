@@ -163,7 +163,6 @@ export default function FAQ() {
     <div className="space-y-8">
       {/* Encabezado */}
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Preguntas Frecuentes</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
           Encuentra respuestas rápidas a las preguntas más comunes sobre nuestra plataforma
         </p>
@@ -263,4 +262,5 @@ export default function FAQ() {
       `}</style>
     </div>
   );
+
 }
