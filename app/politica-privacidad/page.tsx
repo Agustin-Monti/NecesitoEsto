@@ -4,7 +4,7 @@ import LegalPageLayout from '@/components/LegalPageLayout';
 export default function PoliticaPrivacidad() {
   return (
     <LegalPageLayout title="Política de Privacidad">
-      <div className="space-y-8">
+      <div className="space-y-8 mt-1">
         <section>
           <h2>1. Información que Recopilamos</h2>
           <p>Recopilamos la siguiente información:</p>
@@ -76,4 +76,5 @@ export default function PoliticaPrivacidad() {
       </div>
     </LegalPageLayout>
   );
+
 }
