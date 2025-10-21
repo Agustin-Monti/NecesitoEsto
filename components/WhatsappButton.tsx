@@ -1,36 +1,33 @@
-'use client'; // Asegúrate de marcar este componente como del lado del cliente
+'use client';
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function WhatsappButton() {
-  const [isVisible, setIsVisible] = useState(true); // Estado para controlar la visibilidad
-  const phoneNumber = "5491155939008"; // Reemplaza con tu número de WhatsApp
-  const message = encodeURIComponent("¡Hola! Me gustaría obtener más información sobre Necesito Esto!."); // Mensaje predeterminado
+  const [isVisible, setIsVisible] = useState(true);
+  const phoneNumber = "5491155939008";
+  const message = encodeURIComponent("¡Hola! Me gustaría obtener más información sobre Necesito Esto!.");
 
   useEffect(() => {
     const handleScroll = () => {
-      // Altura total del documento
-      const documentHeight = document.documentElement.scrollHeight;
-      // Altura de la ventana visible
+      const footer = document.getElementById('footer');
+      if (!footer) return;
+
+      const footerRect = footer.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      // Posición actual del scroll
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
-      // Definir un margen para considerar que el usuario está en el footer
-      const margin = 100; // Ajusta este valor según sea necesario
-
-      // Si el usuario está cerca del final, ocultar el botón
-      if (documentHeight - (scrollTop + windowHeight) < margin) {
+      
+      // Si el footer está visible en la pantalla (a 100px de entrar en vista)
+      if (footerRect.top < windowHeight - 100) {
         setIsVisible(false);
       } else {
         setIsVisible(true);
       }
     };
 
-    // Escuchar el evento de scroll
     window.addEventListener("scroll", handleScroll);
+    // Ejecutar una vez al cargar
+    handleScroll();
 
-    // Limpiar el evento al desmontar el componente
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
@@ -42,12 +39,14 @@ export default function WhatsappButton() {
       target="_blank"
       rel="noopener noreferrer"
       className={`
-        fixed right-4 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg 
-        transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
-        border-2 border-transparent flex items-center gap-2 animate-bounce-light text-xs md:text-base md:py-3 md:px-6
-        bottom-16 ${isVisible ? "block" : "hidden"} z-20
-        [&>span]:hidden [&>span]:md:inline  /* Oculta el texto en móvil, muestra en desktop */
+        fixed right-4 bg-green-600 text-white font-semibold py-3 px-3 md:px-6 rounded-full shadow-lg 
+        transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2
+        border-2 border-transparent flex items-center gap-2 animate-bounce-light
+        ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"}
+        bottom-36 md:bottom-6 z-40
+        [&>span]:hidden [&>span]:md:inline
       `}
+      style={{ transition: "transform 0.3s ease, opacity 0.3s ease" }}
     >
       {/* SVG de WhatsApp */}
       <svg
