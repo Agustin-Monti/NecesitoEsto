@@ -24,7 +24,7 @@ export default function Footer() {
 
   const recursos = [
     { nombre: 'Blog', href: '/blog' },
-    { nombre: 'FAQ', href: '/faq' },
+    { nombre: 'FAQ', href: '/preguntas-frecuentes' },
     { nombre: 'Contacto', href: '/contacto' },
     { nombre: 'Soporte', href: '/soporte' },
     { nombre: 'Aviso Legal', href: '/aviso-legal' },
@@ -187,4 +187,5 @@ export default function Footer() {
       </div>
     </footer>
   );
+
 }
