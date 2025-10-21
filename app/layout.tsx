@@ -1,6 +1,6 @@
 import { GeistSans } from "geist/font/sans";
 import { ThemeProvider } from "next-themes";
-import  HeaderWithAuth  from "@/components/HeaderWithAuth";
+import HeaderWithAuth from "@/components/HeaderWithAuth";
 import WhatsappButton from "@/components/WhatsappButton";
 import FloatingButton from "@/components/FloatingButton";
 import Footer from "@/components/Footer";
@@ -23,7 +23,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground">
@@ -33,17 +32,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main className="">
+          <main className="pb-10 md:pb-0">
             <HeaderWithAuth />
             <div>
               {children}
               <WhatsappButton />
-              {/* Botón flotante "Publica tu necesidad" en móvil */}
-              <div className="md:hidden fixed bottom-20 right-4 z-50 mb-12">
+              {/* Botón flotante "Publica tu necesidad" - Ahora con detección de footer */}
+              <div className="md:hidden">
                 <FloatingButton />
               </div>
             </div>
-
             <Footer />
           </main>
         </ThemeProvider>
