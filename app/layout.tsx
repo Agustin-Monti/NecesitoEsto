@@ -3,6 +3,7 @@ import { ThemeProvider } from "next-themes";
 import  HeaderWithAuth  from "@/components/HeaderWithAuth";
 import WhatsappButton from "@/components/WhatsappButton";
 import FloatingButton from "@/components/FloatingButton";
+import Footer from "@/components/Footer";
 
 import Image from "next/image";
 import "./globals.css";
@@ -26,6 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <main className="">
             <HeaderWithAuth />
             <div>
@@ -37,12 +44,9 @@ export default function RootLayout({
               </div>
             </div>
 
-            <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16 bg-gray-400">
-              <p className="h2 text-white text-xl">Necesito <span className='azul'>!Esto</span> © Copyright - 2025</p>
-              {/*<ThemeSwitcher />*/}
-              <Image src="/logotm2.png" alt="Logo de Necesito Esto!" width={170} height={90} />
-            </footer>
+            <Footer />
           </main>
+        </ThemeProvider>
       </body>
     </html>
   );
