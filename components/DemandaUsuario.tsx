@@ -1,140 +1,255 @@
 import { useEffect, useState } from 'react';
-import { fetchDemandas, deleteDemanda  } from '@/actions/demanda-actions'; // Ajusta la ruta a tu función
-import  ModalDemandaUsuario  from '@/components/ModalDemandaUsuario'; // Ajusta la ruta a tu función
+import { fetchDemandas, deleteDemanda } from '@/actions/demanda-actions';
+import ModalDemandaUsuario from '@/components/ModalDemandaUsuario';
 import Link from 'next/link';
-import Swal from "sweetalert2"; // Importamos SweetAlert2
-import { PencilIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid'; // Asegúrate de importar los íconos
+import Swal from "sweetalert2";
+import { EyeIcon, TrashIcon, ExclamationTriangleIcon, PlusIcon } from '@heroicons/react/24/solid';
 
 const DemandaUsuario = ({ userId }: { userId: string }) => {
   const [demandas, setDemandas] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDemanda, setSelectedDemanda] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch demandas al montar el componente
   useEffect(() => {
     const getDemandas = async () => {
       const data = await fetchDemandas(userId);
       setDemandas(data);
+      setLoading(false);
     };
-
     getDemandas();
   }, [userId]);
 
-  const handleEdit = (demanda: any) => {
+  const handleView = (demanda: any) => {
     setSelectedDemanda(demanda);
     setIsModalOpen(true);
   };
 
-  // Recargar las demandas después de la edición o eliminación
   const reloadDemandas = async () => {
     const data = await fetchDemandas(userId);
     setDemandas(data);
   };
 
   const handleDelete = async (demandaId: string) => {
-    // Mostrar alerta de confirmación
     const result = await Swal.fire({
       title: "¿Estás seguro?",
       text: "Esta acción ocultará la demanda, pero no eliminará los pagos asociados.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      cancelButtonColor: "#6b7280",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
+      background: '#fff',
+      color: '#374151',
     });
-  
-    // Si el usuario confirma, proceder con la eliminación
+
     if (result.isConfirmed) {
-      const success = await deleteDemanda(demandaId); // Llamamos a la función para cambiar el estado
-  
+      const success = await deleteDemanda(demandaId);
       if (success) {
-        // Mostrar mensaje de éxito
         Swal.fire({
           title: "Eliminado",
           text: "La demanda ha sido eliminada correctamente.",
           icon: "success",
           timer: 2000,
+          background: '#fff',
+          color: '#374151',
         });
-  
-        // Recargar la lista de demandas
         reloadDemandas();
       } else {
-        // Mostrar mensaje de error si hubo un problema
         Swal.fire({
           title: "Error",
           text: "Hubo un problema al eliminar la demanda. Intenta de nuevo.",
           icon: "error",
+          background: '#fff',
+          color: '#374151',
         });
       }
     }
   };
 
-  return (
-    <div className="flex flex-col items-center pb-5 mt-10">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Mis Demandas</h2>
+  // Calcular estadísticas
+  const stats = {
+    total: demandas.length,
+    activas: demandas.filter(d => new Date(d.fecha_vencimiento) > new Date()).length,
+    porVencer: demandas.filter(d => {
+      const fechaVencimiento = new Date(d.fecha_vencimiento);
+      const hoy = new Date();
+      const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+      return diferenciaDias <= 2 && diferenciaDias >= 0;
+    }).length,
+    vencidas: demandas.filter(d => new Date(d.fecha_vencimiento) < new Date()).length
+  };
 
-      {demandas.length === 0 ? (
-        <p className="text-lg text-gray-600">No tienes demandas creadas aún.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-          {demandas.map((demanda) => {
-            const fechaVencimiento = new Date(demanda.fecha_vencimiento);
-            const hoy = new Date();
-            const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-
-            let advertencia = null;
-            if (diferenciaDias < 0) {
-              advertencia = "Demanda vencida. Renueva la fecha para que aparezca en el portal de demandas.";
-            } else if (diferenciaDias <= 2) {
-              advertencia = "La demanda está por vencer. Renueva la fecha editando la demanda.";
-            }
-
-            return (
-              <div key={demanda.id} className="bg-white shadow-lg rounded-xl p-5 border border-gray-200 hover:shadow-xl transition duration-300 flex flex-col h-[300px]">
-                <p className="text-lg font-semibold">[{demanda.id}]</p>
-                <h3 className="text-lg font-semibold text-gray-800 truncate">{demanda.detalle}</h3>
-                <p className="text-gray-500 text-sm">Categoría: {demanda.categorias?.categoria || "Sin Categoría"}</p>
-                <p className="text-gray-500 text-sm">Rubro: {demanda.rubros?.nombre || "Sin Rubro"}</p>
-                <p className="text-gray-500 text-sm">Empresa: {demanda.empresa}</p>
-                <p className="text-gray-500 text-sm">Vencimiento: {fechaVencimiento.toLocaleDateString()}</p>
-
-                {advertencia && (
-                  <div className="mt-2 bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg flex items-center gap-2">
-                    <ExclamationTriangleIcon className="h-5 w-5" />
-                    <span className="text-sm">{advertencia}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between mt-auto">
-                  <button
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
-                    onClick={() => handleEdit(demanda)}
-                  >
-                    <PencilIcon className="h-5 w-5" /> Editar
-                  </button>
-                  <button
-                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition duration-300"
-                    onClick={() => handleDelete(demanda.id)}
-                  >
-                    <TrashIcon className="h-5 w-5" /> Eliminar
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-600">Cargando demandas...</p>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      <Link href="/demandas/new">
-        <button className="mt-6 bg-green-600 text-white text-lg px-6 py-3 rounded-lg shadow-md hover:bg-green-700 transition duration-300">
-          + Crear Nueva Demanda
-        </button>
-      </Link>
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mt-16">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Demandas</h1>
+          <p className="text-gray-600">Gestiona todas tus necesidades registradas</p>
+        </div>
 
-      {isModalOpen && selectedDemanda && (
-        <ModalDemandaUsuario demanda={selectedDemanda} closeModal={() => { setIsModalOpen(false); reloadDemandas(); }} />
-      )}
+        {demandas.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <PlusIcon className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes demandas creadas</h3>
+              <p className="text-gray-500 mb-6">Comienza creando tu primera demanda para mostrar tus necesidades.</p>
+              <Link href="/demandas/new">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 inline-flex items-center">
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Crear Nueva Demanda
+                </button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Demandas</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Activas</p>
+                <p className="text-2xl font-bold text-green-600">{stats.activas}</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Por Vencer</p>
+                <p className="text-2xl font-bold text-yellow-600">{stats.porVencer}</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 mb-1">Vencidas</p>
+                <p className="text-2xl font-bold text-red-600">{stats.vencidas}</p>
+              </div>
+            </div>
+
+            {/* Grid de Demandas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {demandas.map((demanda) => {
+                const fechaVencimiento = new Date(demanda.fecha_vencimiento);
+                const hoy = new Date();
+                const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                
+                let estado = 'active';
+                let estadoColor = 'text-green-600 bg-green-50 border-green-200';
+                let advertencia = null;
+
+                if (diferenciaDias < 0) {
+                  estado = 'expired';
+                  estadoColor = 'text-red-600 bg-red-50 border-red-200';
+                  advertencia = "Demanda Vencida";
+                } else if (diferenciaDias <= 2) {
+                  estado = 'warning';
+                  estadoColor = 'text-yellow-600 bg-yellow-50 border-yellow-200';
+                  advertencia = "La demanda está por vencer.";
+                }
+
+                return (
+                  <div key={demanda.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                    {/* Header con ID y Estado */}
+                    <div className="px-6 py-4 border-b border-gray-100">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-sm font-medium text-gray-500">ID: {demanda.id}</span>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full border ${estadoColor}`}>
+                          {estado === 'expired' ? 'Vencida' : estado === 'warning' ? 'Por Vencer' : 'Activa'}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 leading-tight">
+                        {demanda.detalle}
+                      </h3>
+                    </div>
+
+                    {/* Contenido */}
+                    <div className="px-6 py-4 space-y-3">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium mr-2">Empresa:</span>
+                        <span className="truncate">{demanda.empresa}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium mr-2">Categoría:</span>
+                        <span>{demanda.categorias?.categoria || "Sin Categoría"}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium mr-2">Rubro:</span>
+                        <span>{demanda.rubros?.nombre || "Sin Rubro"}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium mr-2">Vence:</span>
+                        <span>{fechaVencimiento.toLocaleDateString('es-AR')}</span>
+                      </div>
+
+                      {/* Advertencia */}
+                      {advertencia && (
+                        <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-3">
+                          <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-yellow-800 leading-relaxed">{advertencia}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleView(demanda)}
+                          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                          Ver Demanda
+                        </button>
+                        <button
+                          onClick={() => handleDelete(demanda.id)}
+                          className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white hover:bg-red-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Botón crear nueva demanda */}
+            <div className="text-center mt-8">
+              <Link href="/demandas/new">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 inline-flex items-center">
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Crear Nueva Demanda
+                </button>
+              </Link>
+            </div>
+          </>
+        )}
+
+        {/* Modal */}
+        {isModalOpen && selectedDemanda && (
+          <ModalDemandaUsuario 
+            demanda={selectedDemanda} 
+            closeModal={() => { 
+              setIsModalOpen(false); 
+              reloadDemandas(); 
+            }} 
+          />
+        )}
+      </div>
     </div>
   );
 };
