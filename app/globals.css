@@ -136,6 +136,10 @@ input {
   background-color: #f0f0f0;
 }
 
+option {
+  background-color: #f0f0f0;
+}
+
 /* No hover behavior for larger screens - only click-based toggle */
 /* Hide the menu on larger screens */
 @media (min-width: 768px) {
