@@ -3,19 +3,23 @@
 import { useState } from "react";
 import { UserIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { Button } from "@/components/ui/button"; // Si usas un botón reutilizable
+import { Button } from "@/components/ui/button";
 
 const AuthModal = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-        <li className="flex flex-col items-center cursor-pointer">
-            <button onClick={() => setIsOpen(true)} className="flex flex-col items-center">
-                <UserIcon className="w-6 h-6 mx-auto text-black" />
-            </button>
-        </li>
-
+        <button 
+          onClick={() => setIsOpen(true)} 
+          className="flex flex-col items-center gap-1 p-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group"
+        >
+          <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-200">
+            <UserIcon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+          </div>
+          <span className="text-xs font-medium">Cuenta</span>
+        </button>
+      
 
       {/* Modal */}
       {isOpen && (

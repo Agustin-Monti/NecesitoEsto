@@ -5,12 +5,12 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 import {
-  UserIcon,ArrowRightStartOnRectangleIcon
+  UserIcon,
+  ArrowRightStartOnRectangleIcon
 } from "@heroicons/react/24/solid";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export default async function AuthButton({ user }: { user: any }) {
-  // Check environment variables (ensure this is called async if needed)
   if (!hasEnvVars) {
     return (
       <div className="flex gap-4 items-center">
@@ -18,7 +18,6 @@ export default async function AuthButton({ user }: { user: any }) {
           Please update .env.local file with anon key and url
         </Badge>
         <div className="flex gap-2">
-          
           <Button
             asChild
             size="sm"
@@ -37,37 +36,39 @@ export default async function AuthButton({ user }: { user: any }) {
           >
             <Link href="/sign-up">Cerrar Sesión</Link>
           </Button>
-          <li className="flex flex-col items-center cursor-pointer">
-            
-          </li>
         </div>
       </div>
     );
   }
 
-  // Create Supabase client and get user data
-
   return user ? (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex flex-col items-center cursor-pointer">
-        <UserIcon className="h-6 w-6 text-black" />
-        <span className="hidden xl:block text-sm">Perfil</span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <div className="px-4 py-2 text-sm text-gray-700">
-          <p className="font-semibold">Hola, {user.email}</p>
+      <DropdownMenuTrigger className="flex flex-col items-center gap-1 p-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group">
+        <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-200">
+          <UserIcon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
         </div>
-        <DropdownMenuItem asChild>
-          <Link href="/profile" className="w-full text-left">
-            <UserIcon className="h-6 w-6 text-black" />
-              Ir a Perfil
+        <span className="text-xs font-medium">Perfil</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48 p-2">
+        <div className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100">
+          <p className="font-semibold truncate">Hola, {user.email}</p>
+        </div>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/profile" className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-50 transition-colors duration-200">
+            <UserIcon className="h-4 w-4 text-gray-600" />
+            Ir a Perfil
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-            <button type="submit" className="w-full flex items-center gap-2 text-left text-red-600" onClick={signOutAction}>
-              <ArrowRightStartOnRectangleIcon className="h-6 w-6 text-black" />
+        <DropdownMenuItem className="cursor-pointer p-0">
+          <form action={signOutAction} className="w-full">
+            <button 
+              type="submit" 
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md text-red-600 hover:bg-red-50 transition-colors duration-200"
+            >
+              <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
               Cerrar Sesión
             </button>
+          </form>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
