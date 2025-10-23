@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { updateProfileAction } from "@/actions/profile-actions";
 import { createClient } from "@/utils/supabase/client";
+import Alerta from "@/components/Alerta";
 
 interface Profile {
   id?: string;
@@ -14,11 +15,11 @@ interface Profile {
   direccion: string;
   codigo_postal: string;
   created_at: string;
-  telefono:string;
+  telefono: string;
   empresa: string; 
   pais_id: string; 
-  id_categoria:string;
-  rubro_id:string;
+  id_categoria: string;
+  rubro_id: string;
 }
 
 interface DatosGeneralesProps {
@@ -28,9 +29,28 @@ interface DatosGeneralesProps {
 const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
   const sanitizedData = {
     ...data,
-    pais_id: data.pais_id ?? "", // Si es null o undefined, usa ""
+    pais_id: data.pais_id ?? "",
+    id_categoria: data.id_categoria ?? "", 
+    rubro_id: data.rubro_id ?? "",
+    provincia: data.provincia ?? "",
+    municipio: data.municipio ?? "",
+    localidad: data.localidad ?? "",
+    direccion: data.direccion ?? "",
+    codigo_postal: data.codigo_postal ?? "",
+    telefono: data.telefono ?? "",
+    empresa: data.empresa ?? "",
   };
+
   const [profile, setProfile] = useState<Profile>(sanitizedData);
+  const [alerta, setAlerta] = useState<{
+    visible: boolean;
+    tipo: 'success' | 'error' | 'warning' | 'info';
+    mensaje: string;
+  }>({
+    visible: false,
+    tipo: 'success',
+    mensaje: ''
+  });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [formattedFecha, setFormattedFecha] = useState<string>("");
@@ -43,25 +63,18 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
   const [mostrarInputRubro, setMostrarInputRubro] = useState(false);
   const [nuevoPais, setNuevoPais] = useState("");
   const [mostrarInputPais, setMostrarInputPais] = useState(false);
-
-
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setFormattedFecha(formatFecha(profile.created_at));
   }, [profile.created_at]);
-
 
   useEffect(() => {
     const fetchPaises = async () => {
       try {
         const supabase = createClient();
         const { data, error } = await supabase.from("pais").select("id, nombre");
-  
-        if (error) {
-          console.error("Error al obtener países:", error.message);
-        } else {
-          setPaises(data);
-        }
+        if (!error) setPaises(data || []);
       } catch (err: any) {
         console.error("Error al obtener países:", err.message);
       }
@@ -71,12 +84,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       try {
         const supabase = createClient();
         const { data, error } = await supabase.from("categorias").select("id, categoria");
-  
-        if (error) {
-          console.error("Error al obtener categorias:", error.message);
-        } else {
-          setCategorias(data);
-        }
+        if (!error) setCategorias(data || []);
       } catch (err: any) {
         console.error("Error al obtener categorias:", err.message);
       }
@@ -86,12 +94,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
       try {
         const supabase = createClient();
         const { data, error } = await supabase.from("rubros").select("id, nombre");
-  
-        if (error) {
-          console.error("Error al obtener rubros:", error.message);
-        } else {
-          setRubros(data);
-        }
+        if (!error) setRubros(data || []);
       } catch (err: any) {
         console.error("Error al obtener rubros:", err.message);
       }
@@ -102,41 +105,19 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
     fetchRubros();
   }, []);
 
+  const mostrarAlerta = (tipo: 'success' | 'error' | 'warning' | 'info', mensaje: string) => {
+    setAlerta({ visible: true, tipo, mensaje });
+  };
 
-  // En tu componente
-  const sendProfileUpdateEmail = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user?.email) {
-      console.error('No se pudo obtener el email del usuario');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/mail-perfil', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          email: user.email,
-          nombre: profile.nombre,
-          apellido: profile.apellido
-        }),
-      });
-      // ... resto del código
-    } catch (error) {
-      console.error('Error al enviar correo:', error);
-    }
+  const ocultarAlerta = () => {
+    setAlerta(prev => ({ ...prev, visible: false }));
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
       const supabase = createClient();
 
-      // 👇 Si se mostró el input y se ingresó un nuevo país
       if (mostrarInputPais && nuevoPais.trim() !== "") {
         const { data: nuevoPaisData, error: errorInsertPais } = await supabase
           .from("pais")
@@ -145,11 +126,9 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
           .single();
 
         if (errorInsertPais) {
-          setError("Error al insertar nuevo país: " + errorInsertPais.message);
+          mostrarAlerta('error', "Error al insertar nuevo país: " + errorInsertPais.message);
           return;
         }
-
-        // Actualizar el profile con el nuevo país insertado
         setProfile((prev) => ({ ...prev, pais_id: nuevoPaisData.id }));
       }
 
@@ -158,295 +137,336 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
         if (key !== "fecha_creacion" && key !== "id") formData.append(key, value as string);
       });
 
-      if (mostrarInputCategoria) {
-        formData.append("nueva_categoria", nuevaCategoria);
-      }
-
-      if (mostrarInputRubro) {
-        formData.append("nuevo_rubro", nuevoRubro);
-      }
+      if (mostrarInputCategoria) formData.append("nueva_categoria", nuevaCategoria);
+      if (mostrarInputRubro) formData.append("nuevo_rubro", nuevoRubro);
 
       const result = await updateProfileAction(formData);
-      console.log("Respuesta del backend:", result);
 
       if (result.success) {
-        setSuccess(true);
-        setError(null);
-        await sendProfileUpdateEmail();
+        mostrarAlerta('success', 'Perfil actualizado exitosamente');
+      } else {
+        mostrarAlerta('error', result.message || "Error al actualizar el perfil");
       }
     } catch (err: any) {
-      setError(err.message);
-      setSuccess(false);
+      mostrarAlerta('error', err.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-
   const formatFecha = (fecha: string | undefined | null): string => {
-    if (!fecha) {
-      console.log("Fecha no disponible: el valor es null o undefined");
-      return "Fecha no disponible";
-    }
-  
+    if (!fecha) return "Fecha no disponible";
     try {
-      // Crear objeto Date directamente (maneja automáticamente el formato ISO)
       const fechaObj = new Date(fecha);
-      
-      if (isNaN(fechaObj.getTime())) {
-        console.log("Fecha inválida:", fecha);
-        return "Fecha inválida";
-      }
-  
-      // Usar los métodos UTC para evitar problemas de zona horaria
+      if (isNaN(fechaObj.getTime())) return "Fecha inválida";
       const dia = fechaObj.getUTCDate().toString().padStart(2, "0");
       const mes = (fechaObj.getUTCMonth() + 1).toString().padStart(2, "0");
       const anio = fechaObj.getUTCFullYear();
-  
       return `${dia}/${mes}/${anio}`;
     } catch (error) {
-      console.error("Error al formatear la fecha:", error);
       return "Fecha inválida";
     }
   };
-  
-  
 
   return (
-    <div className="text-center pb-5 mt-40">
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      {success && <div className="text-green-500 mb-4">Perfil actualizado con éxito</div>}
-
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-        {/* Campo Nombre */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Nombre</label>
-          <input
-            type="text"
-            value={profile.nombre}
-            onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
+    <div className="min-h-screen bg-gray-50 py-8">
+      {/* Alerta */}
+      <Alerta
+        tipo={alerta.tipo}
+        mensaje={alerta.mensaje}
+        visible={alerta.visible}
+        onClose={ocultarAlerta}
+        autoCerrar={true}
+        duracion={5000}
+      />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mt-16">
+          <h1 className="text-3xl font-bold text-gray-900 mt-2">Datos Generales</h1>
+          <p className="text-gray-600">Actualiza tu información personal y profesional</p>
         </div>
 
-        {/* Campo Apellido */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Apellido</label>
-          <input
-            type="text"
-            value={profile.apellido}
-            onChange={(e) => setProfile({ ...profile, apellido: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+        {/* Alertas */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            Perfil actualizado con éxito
+          </div>
+        )}
 
-        {/* Campo Apellido */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Empresa</label>
-          <input
-            type="text"
-            value={profile.empresa}
-            onChange={(e) => setProfile({ ...profile, empresa: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+        {/* Formulario */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Información Personal */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                  Información Personal
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                    <input
+                      type="text"
+                      value={profile.nombre}
+                      onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu nombre"
+                    />
+                  </div>
 
-        {/* Campo Pais */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">País</label>
-              <select
-                value={profile.pais_id || ""}
-                onChange={(e) => {
-                  if (e.target.value === "nueva") {
-                    setMostrarInputPais(true);
-                    setProfile({ ...profile, pais_id: "" });
-                  } else {
-                    setMostrarInputPais(false);
-                    setProfile({ ...profile, pais_id: e.target.value });
-                  }
-                }}
-                className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-              >
-                <option value="">Seleccione un país</option>
-                {paises.map((pais) => (
-                  <option key={pais.id} value={pais.id}>
-                    {pais.nombre}
-                  </option>
-                ))}
-                <option value="nueva">+ Agregar nuevo pais</option>
-              </select>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Apellido</label>
+                    <input
+                      type="text"
+                      value={profile.apellido}
+                      onChange={(e) => setProfile({ ...profile, apellido: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu apellido"
+                    />
+                  </div>
 
-            {mostrarInputPais && (
-              <input
-                type="text"
-                value={nuevoPais}
-                onChange={(e) => setNuevoPais(e.target.value)}
-                placeholder="Nuevo país"
-                className="border border-slate-950 rounded-md p-3 shadow-sm mt-2 focus:outline-none focus:ring focus:ring-blue-500 transition"
-              />
-            )}
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                    <input
+                      type="text"
+                      value={profile.telefono}
+                      onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu teléfono"
+                    />
+                  </div>
+                </div>
+              </div>
 
+              {/* Información Profesional */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                  Información Profesional
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Empresa</label>
+                    <input
+                      type="text"
+                      value={profile.empresa}
+                      onChange={(e) => setProfile({ ...profile, empresa: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Nombre de tu empresa"
+                    />
+                  </div>
 
-        {/* Campo Provincia */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Provincia</label>
-          <input
-            type="text"
-            value={profile.provincia}
-            onChange={(e) => setProfile({ ...profile, provincia: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">País</label>
+                    <select
+                      value={profile.pais_id}
+                      onChange={(e) => {
+                        if (e.target.value === "nueva") {
+                          setMostrarInputPais(true);
+                          setProfile({ ...profile, pais_id: "" });
+                        } else {
+                          setMostrarInputPais(false);
+                          setProfile({ ...profile, pais_id: e.target.value });
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    >
+                      <option value="">Seleccione un país</option>
+                      {paises.map((pais) => (
+                        <option key={pais.id} value={pais.id}>{pais.nombre}</option>
+                      ))}
+                      <option value="nueva">+ Agregar nuevo país</option>
+                    </select>
+                    {mostrarInputPais && (
+                      <input
+                        type="text"
+                        value={nuevoPais}
+                        onChange={(e) => setNuevoPais(e.target.value)}
+                        placeholder="Ingresa el nuevo país"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
 
-        {/* Campo Municipio */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Municipio</label>
-          <input
-            type="text"
-            value={profile.municipio}
-            onChange={(e) => setProfile({ ...profile, municipio: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+              {/* Ubicación */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                  Ubicación
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Provincia</label>
+                    <input
+                      type="text"
+                      value={profile.provincia}
+                      onChange={(e) => setProfile({ ...profile, provincia: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu provincia"
+                    />
+                  </div>
 
-        {/* Campo Localidad */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Localidad</label>
-          <input
-            type="text"
-            value={profile.localidad}
-            onChange={(e) => setProfile({ ...profile, localidad: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Municipio</label>
+                    <input
+                      type="text"
+                      value={profile.municipio}
+                      onChange={(e) => setProfile({ ...profile, municipio: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu municipio"
+                    />
+                  </div>
 
-        {/* Campo Dirección */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Dirección</label>
-          <input
-            type="text"
-            value={profile.direccion}
-            onChange={(e) => setProfile({ ...profile, direccion: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Localidad</label>
+                    <input
+                      type="text"
+                      value={profile.localidad}
+                      onChange={(e) => setProfile({ ...profile, localidad: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu localidad"
+                    />
+                  </div>
+                </div>
+              </div>
 
-        {/* Campo Código Postal */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Código Postal</label>
-          <input
-            type="text"
-            value={profile.codigo_postal}
-            onChange={(e) => setProfile({ ...profile, codigo_postal: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+              {/* Dirección y Categorías */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                  Detalles Adicionales
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                    <input
+                      type="text"
+                      value={profile.direccion}
+                      onChange={(e) => setProfile({ ...profile, direccion: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu dirección completa"
+                    />
+                  </div>
 
-        {/* Campo Telefono */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Telefono</label>
-          <input
-            type="text"
-            value={profile.telefono}
-            onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
-            className="border border-slate-950 rounded-md p-3 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 transition"
-          />
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Código Postal</label>
+                    <input
+                      type="text"
+                      value={profile.codigo_postal}
+                      onChange={(e) => setProfile({ ...profile, codigo_postal: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Tu código postal"
+                    />
+                  </div>
 
-        {/* Campo categoria */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Categoria</label>
-          <select
-            className="border border-slate-950 rounded-md p-3"
-            value={profile.id_categoria || ""}
-            onChange={(e) => {
-              if (e.target.value === "nueva") {
-                setMostrarInputCategoria(true);
-                setProfile({ ...profile, id_categoria: "" });
-              } else {
-                setMostrarInputCategoria(false);
-                setProfile({ ...profile, id_categoria: e.target.value });
-              }
-            }}
-          >
-            <option value="">Seleccione una categoría</option>
-            {categorias
-              .slice() // para no mutar el array original
-              .sort((a, b) => a.categoria.localeCompare(b.categoria))
-              .map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.categoria}
-                </option>
-            ))}
-            <option value="nueva">+ Agregar nueva categoría</option>
-          </select>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                    <select
+                      value={profile.id_categoria}
+                      onChange={(e) => {
+                        if (e.target.value === "nueva") {
+                          setMostrarInputCategoria(true);
+                          setProfile({ ...profile, id_categoria: "" });
+                        } else {
+                          setMostrarInputCategoria(false);
+                          setProfile({ ...profile, id_categoria: e.target.value });
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    >
+                      <option value="">Seleccione una categoría</option>
+                      {categorias
+                        .sort((a, b) => a.categoria.localeCompare(b.categoria))
+                        .map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.categoria}</option>
+                      ))}
+                      <option value="nueva">+ Agregar nueva categoría</option>
+                    </select>
+                    {mostrarInputCategoria && (
+                      <input
+                        type="text"
+                        placeholder="Nueva categoría"
+                        value={nuevaCategoria}
+                        onChange={(e) => setNuevaCategoria(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      />
+                    )}
+                  </div>
 
-          {mostrarInputCategoria && (
-            <input
-              type="text"
-              placeholder="Nueva categoría"
-              value={nuevaCategoria}
-              onChange={(e) => setNuevaCategoria(e.target.value)}
-              className="border border-slate-950 rounded-md p-2 mt-2"
-            />
-          )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rubro</label>
+                    <select
+                      value={profile.rubro_id}
+                      onChange={(e) => {
+                        if (e.target.value === "nuevo") {
+                          setMostrarInputRubro(true);
+                          setProfile({ ...profile, rubro_id: "" });
+                        } else {
+                          setMostrarInputRubro(false);
+                          setProfile({ ...profile, rubro_id: e.target.value });
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    >
+                      <option value="">Seleccione un rubro</option>
+                      {rubros
+                        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                        .map((rubro) => (
+                          <option key={rubro.id} value={rubro.id}>{rubro.nombre}</option>
+                      ))}
+                      <option value="nuevo">+ Agregar nuevo rubro</option>
+                    </select>
+                    {mostrarInputRubro && (
+                      <input
+                        type="text"
+                        placeholder="Nuevo rubro"
+                        value={nuevoRubro}
+                        onChange={(e) => setNuevoRubro(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        </div>
-
-        {/* Campo Rubro */}
-        <div className="flex flex-col mb-1">
-          <label className="block mb-2 font-semibold">Rubro</label>
-          <select
-            className="border border-slate-950 rounded-md p-3"
-            value={profile.rubro_id}
-            onChange={(e) => {
-              if (e.target.value === "nuevo") {
-                setMostrarInputRubro(true);
-                setProfile({ ...profile, rubro_id: "" });
-              } else {
-                setMostrarInputRubro(false);
-                setProfile({ ...profile, rubro_id: e.target.value });
-              }
-            }}
-          >
-            <option value="">Seleccione un rubro</option>
-            {rubros
-              .slice()
-              .sort((a, b) => a.nombre.localeCompare(b.nombre))
-              .map((rubro) => (
-                <option key={rubro.id} value={rubro.id}>
-                  {rubro.nombre}
-                </option>
-            ))}
-            <option value="nuevo">+ Agregar nuevo rubro</option>
-          </select>
-
-          {mostrarInputRubro && (
-            <input
-              type="text"
-              placeholder="Nuevo rubro"
-              value={nuevoRubro}
-              onChange={(e) => setNuevoRubro(e.target.value)}
-              className="border border-slate-950 rounded-md p-2 mt-2"
-            />
-          )}
-
+            {/* Fecha de creación */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha de Creación
+                  </label>
+                  <p className="text-gray-600">{formattedFecha}</p>
+                </div>
+                
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="mt-4 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar Cambios'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Mostrar la fecha de creación al final correctamente */}
-      <div className="mt-6">
-        <label className="block mb-2 font-semibold">Fecha de Creación</label>
-        <p className="border border-slate-950 rounded-md p-3 bg-gray-100 shadow-sm">
-          {formattedFecha}
-        </p>
-      </div>
-
-      <button
-        onClick={handleSave}
-        className="mt-6 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500 transition"
-      >
-        Guardar Cambios
-      </button>
     </div>
   );
 };
