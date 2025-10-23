@@ -780,17 +780,34 @@ export function CreateDemandForm() {
             </div> */} 
 
             {/* Términos y Condiciones */}
-            <div className="mb-8">
-              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <input
-                  type="checkbox"
-                  id="terminos"
-                  disabled={profile?.terminos === true}
-                  checked={checkedTerminos}
-                  onChange={handleCheckboxChange}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded bg-white"
-                />
-                <Label htmlFor="terminos" className="text-sm text-gray-700 flex-1">
+            <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-8">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    id="terminos"
+                    disabled={profile?.terminos === true}
+                    checked={checkedTerminos}
+                    onChange={handleCheckboxChange}
+                    className="sr-only" // Oculta el checkbox nativo
+                  />
+                  <div className={`
+                    w-5 h-5 border-2 rounded transition-all duration-200 flex items-center justify-center
+                    ${checkedTerminos 
+                      ? 'bg-blue-600 border-blue-600' 
+                      : 'bg-white border-gray-300'
+                    }
+                    ${profile?.terminos === true ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                  `}>
+                    {checkedTerminos && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                
+                <span className="text-sm text-gray-700">
                   Acepto los{" "}
                   <a 
                     href="/terminos" 
@@ -802,8 +819,8 @@ export function CreateDemandForm() {
                   {profile?.terminos === true && (
                     <span className="text-green-600 text-xs ml-2">✓ Ya aceptados anteriormente</span>
                   )}
-                </Label>
-              </div>
+                </span>
+              </label>
             </div>
 
             {/* Botón de envío */}
@@ -829,4 +846,3 @@ export function CreateDemandForm() {
     </div>
   );
 }
-
