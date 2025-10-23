@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { createDemandAction, getCategorias, getPaises, getRubros } from "@/actions/demanda-actions";
+import { getCategorias, getPaises, getRubros } from "@/actions/demanda-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Select from "react-select";
@@ -12,10 +12,10 @@ import dynamic from 'next/dynamic';
 import "react-date-picker/dist/DatePicker.css";
 import "react-calendar/dist/Calendar.css";
 import { useRouter } from "next/navigation";
-
+import { X, Upload, Image as ImageIcon } from "lucide-react";
 
 // Carga dinámica del DatePicker para evitar problemas SSR
-const DatePicker  = dynamic(
+const DatePicker = dynamic(
   () => import('react-date-picker').then((mod) => mod.default),
   { 
     ssr: false,
@@ -23,10 +23,15 @@ const DatePicker  = dynamic(
   }
 );
 
-
 type CreateDemandResponse = {
   success: boolean;
   message: string;
+};
+
+type ImageFile = {
+  file: File;
+  preview: string;
+  id: string;
 };
 
 export function CreateDemandForm() {
@@ -57,14 +62,13 @@ export function CreateDemandForm() {
   const [customRubro, setCustomRubro] = useState("");
   const [isCustomRubro, setIsCustomRubro] = useState(false);
   const [checkedTerminos, setCheckedTerminos] = useState(false);
+  const [images, setImages] = useState<ImageFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
   // Función para obtener la fecha actual en Argentina (solución directa)
   const obtenerFechaArgentina = () => {
-    // Usar la fecha local del navegador (ya está en la zona horaria del usuario)
     const ahora = new Date();
-    
-    // Para Argentina, simplemente usar la fecha local
     const año = ahora.getFullYear();
     const mes = String(ahora.getMonth() + 1).padStart(2, '0');
     const dia = String(ahora.getDate()).padStart(2, '0');
@@ -106,6 +110,13 @@ export function CreateDemandForm() {
       }
     }
   }, [searchParams]);
+
+  // Cleanup de URLs de preview
+  useEffect(() => {
+    return () => {
+      images.forEach(image => URL.revokeObjectURL(image.preview));
+    };
+  }, [images]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -221,13 +232,19 @@ export function CreateDemandForm() {
   }, []);
 
   if (loading) {
-    return <p className="text-2xl font-bold mb-4 text-black text-center">Cargando Formulario de Crear Necesidad...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-600">Cargando formulario...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCheckedTerminos(e.target.checked);
   };
-  
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -252,6 +269,65 @@ export function CreateDemandForm() {
     }));
   };
 
+  // Manejo de imágenes
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newImages: ImageFile[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      if (images.length + newImages.length >= 2) {
+        setStatus("error");
+        setSuccess("Máximo 2 imágenes permitidas");
+        break;
+      }
+
+      const file = files[i];
+      
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        setStatus("error");
+        setSuccess("Solo se permiten archivos de imagen");
+        continue;
+      }
+
+      // Validar tamaño (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setStatus("error");
+        setSuccess("Las imágenes no deben superar los 5MB");
+        continue;
+      }
+
+      const preview = URL.createObjectURL(file);
+      newImages.push({
+        file,
+        preview,
+        id: Math.random().toString(36).substr(2, 9)
+      });
+    }
+
+    if (newImages.length > 0) {
+      setImages(prev => [...prev, ...newImages]);
+      setStatus(null);
+      setSuccess(null);
+    }
+
+    // Limpiar input
+    e.target.value = '';
+  };
+
+  const removeImage = (id: string) => {
+    setImages(prev => {
+      const imageToRemove = prev.find(img => img.id === id);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview);
+      }
+      return prev.filter(img => img.id !== id);
+    });
+  };
+
+  // En el handleSubmit del componente:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
@@ -263,30 +339,71 @@ export function CreateDemandForm() {
       return;
     }
 
-    try {
-      const response: CreateDemandResponse = await createDemandAction(demand);
-      console.log("Respuesta del servidor:", response);
+    setIsUploading(true);
 
-      if (response.success) {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No hay sesión activa');
+      }
+      const formData = new FormData();
+      
+      // Agregar datos de la demanda como string
+      formData.append('demandData', JSON.stringify(demand));
+      
+      // Agregar imágenes como archivos
+      images.forEach((image) => {
+        formData.append('images', image.file);
+      });
+
+      console.log('Enviando formulario con:', {
+        demand,
+        imageCount: images.length
+      });
+
+      const response = await fetch('/api/crear-demanda', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}` // ← ESTA LÍNEA ES CLAVE
+        },
+        body: formData, // No headers para FormData
+      });
+
+      const result = await response.json();
+
+      console.log('Respuesta del servidor:', result);
+
+      if (result.success) {
         setStatus("success");
         setSuccess(
-          "Su demanda fue creada correctamente y pasará a evaluarse. " +
-          "En unos minutos recibirá un correo electrónico con el resultado de la evaluación."
+          `Su demanda fue creada correctamente y pasará a evaluarse. ` +
+          `Se subieron ${result.imagesCount} imágenes. ` +
+          `En unos minutos recibirá un correo electrónico con el resultado de la evaluación.`
         );
+
+        // Limpiar imágenes después de subir exitosamente
+        images.forEach(image => URL.revokeObjectURL(image.preview));
+        setImages([]);
 
         setTimeout(() => {
           router.push("/demandas");
-        }, 2500);
+        }, 3000);
       } else {
         setStatus("error");
-        setSuccess(response.message || "Error al crear la demanda.");
+        setSuccess(result.message || "Error al crear la demanda.");
       }
     } catch (error) {
+      console.error('Error en la solicitud:', error);
       setStatus("error");
       setSuccess("Hubo un problema al procesar la solicitud.");
-      console.error("Error en la solicitud:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
+
+  
 
   // Función para formatear fecha en formato argentino
   const formatearFecha = (fecha: string) => {
@@ -301,216 +418,414 @@ export function CreateDemandForm() {
     });
   };
 
+  // Configuración de estilos para react-select
+  const selectStyles = {
+    control: (base: any) => ({
+      ...base,
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      padding: "4px 8px",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: "#3b82f6"
+      },
+      "&:focus-within": {
+        borderColor: "#3b82f6",
+        boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.1)"
+      }
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isSelected ? "#3b82f6" : state.isFocused ? "#f1f5f9" : "white",
+      color: state.isSelected ? "white" : "#334155",
+      "&:active": {
+        backgroundColor: "#3b82f6",
+        color: "white"
+      }
+    })
+  };
+
   return (
-    <>
-      <div>
-        {status && success && (
-          <Alert
-            variant={status === "success" ? "success" : "destructive"}
-            title={status === "success" ? "Éxito" : "Error"}
-            description={success}
-            onClose={() => {
-              setStatus(null);
-              setSuccess(null);
-              setDemand({
-                empresa: "",
-                responsable_solicitud: "",
-                email_contacto: "",
-                telefono: "",
-                fecha_inicio: "",
-                fecha_vencimiento: "",
-                detalle: "",
-                profile_id: user?.id || "",
-                id_categoria: "",
-                pais_id: "",
-                rubro: "",
-              });
-              setCustomRubro("");
-              setIsCustomRubro(false);
-            }}
-          />
-        )}
-      </div>
-
-      <form
-        className="flex flex-col max-w-3xl mx-auto mt-20"
-        method="post"
-        onSubmit={handleSubmit}
-      >
-        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-          <Label htmlFor="empresa">Empresa</Label>
-          <Input
-            className="border border-solid border-slate-950"
-            name="empresa"
-            value={demand.empresa || "Completar datos de perfil para que aparezcan aquí"}
-            readOnly 
-          />
-
-          <Label htmlFor="pais">País</Label>
-          <Input
-            name="pais"
-            value={demand.nombre_pais || "Cargando..."}
-            readOnly
-            className="border border-solid border-slate-950 bg-gray-100"
-          />
-
-          <Label htmlFor="responsable_solicitud">Responsable de la solicitud</Label>
-          <Input
-            name="responsable_solicitud"            
-            value={demand.responsable_solicitud || "Completar datos de perfil para que aparezcan aquí"}
-            readOnly 
-            className="border border-solid border-slate-950"
-          />
-
-          <Label htmlFor="email_contacto">Email de contacto</Label>
-          <Input
-            name="email_contacto"
-            type="email"
-            value={profile?.email || "Completar datos de perfil para que aparezcan aquí"}
-            readOnly 
-            className="border border-solid border-slate-950"
-          />
-
-          <Label htmlFor="telefono">Teléfono de contacto</Label>
-          <Input
-            name="telefono"
-            type="tel"
-            value={demand.telefono || "Completar datos de perfil para que aparezcan aquí"}
-            readOnly 
-            className="border border-solid border-slate-950"
-          />
-
-          {/* Mostrar fechas automáticas (solo lectura) */}
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-semibold text-blue-800 mb-2">Fechas automáticas de la demanda:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="fecha_inicio" className="text-blue-700">Fecha de inicio</Label>
-                <Input
-                  name="fecha_inicio"
-                  value={formatearFecha(demand.fecha_inicio)}
-                  readOnly
-                  className="border border-blue-300 bg-white font-medium"
-                />
-                <p className="text-sm text-blue-600 mt-1">Fecha automática de creación</p>
-              </div>
-              <div>
-                <Label htmlFor="fecha_vencimiento" className="text-blue-700">Fecha de vencimiento</Label>
-                <Input
-                  name="fecha_vencimiento"
-                  value={formatearFecha(demand.fecha_vencimiento)}
-                  readOnly
-                  className="border border-blue-300 bg-white font-medium"
-                />
-                <p className="text-sm text-blue-600 mt-1">Vence 1 semana después de la creación</p>
-              </div>
-            </div>
-            <div className="mt-2 text-xs text-blue-600">
-              <strong>Fechas en base de datos:</strong> {demand.fecha_inicio} / {demand.fecha_vencimiento}
-            </div>
-          </div>
-
-          <Label htmlFor="id_categoria">Categoría <strong className="text-gray-400 text-x">(Selecciona o crea una nueva)</strong></Label>
-          <Select
-            name="id_categoria"
-            options={[
-              ...categorias.map((categoria) => ({ 
-                value: categoria.id, 
-                label: categoria.categoria 
-              })),
-              { value: "otro", label: "Otro (Agregar nueva categoría)" },
-            ]}
-            onChange={(selectedOption) => {
-              if (selectedOption?.value === "otro") {
-                setIsCustomCategoria(true);
-                handleDemandChange("id_categoria", "");
-              } else {
-                setIsCustomCategoria(false);
-                handleDemandChange("id_categoria", selectedOption?.value ?? "");
-              }
-            }}
-            className="mb-2 border border-solid border-slate-950"
-            placeholder="Selecciona una categoría"
-          />
-
-          {isCustomCategoria && (
-            <input
-              type="text"
-              placeholder="Ingrese nueva categoría"
-              value={customCategoria}
-              onChange={(e) => {
-                setCustomCategoria(e.target.value);
-                handleDemandChange("id_categoria", e.target.value);
-              }}
-              className="border p-2 mb-2 border-solid border-slate-950"
-            />
-          )}
-
-          <Label htmlFor="rubro">Rubro <strong className="text-gray-400 text-x">(Escribe tu rubro para buscar el adecuado)</strong></Label>
-          <Select
-            name="rubro"
-            options={[
-              ...rubros.map((rubro) => ({ value: rubro.id, label: rubro.nombre })),
-              { value: "otro", label: "Otro (Agregar nuevo rubro)" },
-            ]}
-            onChange={(selectedOption) => {
-              if (selectedOption?.value === "otro") {
-                setIsCustomRubro(true);
-                handleDemandChange("rubro", "");
-              } else {
-                setIsCustomRubro(false);
-                handleDemandChange("rubro", selectedOption?.value ?? "");
-              }
-            }}
-            className="mb-2 border border-solid border-slate-950"
-            placeholder="Selecciona un rubro"
-          />
-
-          {isCustomRubro && (
-            <input
-              type="text"
-              placeholder="Ingrese nuevo rubro"
-              value={customRubro}
-              onChange={(e) => {
-                setCustomRubro(e.target.value);
-                handleDemandChange("rubro", e.target.value);
-              }}
-              className="border p-2 mb-2 border-solid border-slate-950"
-            />
-          )}
-
-          <Label htmlFor="detalle">Detalle</Label>
-          <textarea
-            name="detalle"
-            placeholder=" Describa el detalle de la demanda"
-            required
-            value={demand.detalle}
-            onChange={handleChange}
-            className="border border-solid border-slate-950"
-            rows={4}
-          />
-
-          {/* Checkbox para términos y condiciones */}
-          <div className="mb-4">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="terminos"
-                disabled={profile?.terminos === true}
-                checked={checkedTerminos}
-                onChange={handleCheckboxChange}
-              />
-              <Label htmlFor="terminos">
-                Acepto los <a href="/terminos" className="text-blue-600 underline" target="_blank">términos y condiciones</a>
-              </Label>
-            </label>
-          </div>
-
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded mt-4 mb-2">
-            Crear Demanda
-          </button>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Nueva Demanda</h1>
+          <p className="text-gray-600">Complete el formulario para registrar su necesidad</p>
         </div>
-      </form>
-    </>
+
+        {/* Alertas */}
+        {status && success && (
+          <div className="mb-6">
+            <Alert
+              variant={status === "success" ? "success" : "destructive"}
+              title={status === "success" ? "Éxito" : "Error"}
+              description={success}
+              onClose={() => {
+                setStatus(null);
+                setSuccess(null);
+                setDemand({
+                  empresa: "",
+                  responsable_solicitud: "",
+                  email_contacto: "",
+                  telefono: "",
+                  fecha_inicio: "",
+                  fecha_vencimiento: "",
+                  detalle: "",
+                  profile_id: user?.id || "",
+                  id_categoria: "",
+                  pais_id: "",
+                  rubro: "",
+                });
+                setCustomRubro("");
+                setIsCustomRubro(false);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Formulario */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <form onSubmit={handleSubmit} className="p-6 sm:p-8">
+            {/* Información de la Empresa */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                Información de la Empresa
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="empresa" className="text-sm font-medium text-gray-700">
+                    Empresa
+                  </Label>
+                  <Input
+                    id="empresa"
+                    name="empresa"
+                    value={demand.empresa || "Completar datos de perfil para que aparezcan aquí"}
+                    readOnly
+                    className="w-full bg-gray-50 border-gray-200 text-gray-600"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pais" className="text-sm font-medium text-gray-700">
+                    País
+                  </Label>
+                  <Input
+                    id="pais"
+                    name="pais"
+                    value={demand.nombre_pais || "Cargando..."}
+                    readOnly
+                    className="w-full bg-gray-50 border-gray-200 text-gray-600"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="responsable_solicitud" className="text-sm font-medium text-gray-700">
+                    Responsable de la solicitud
+                  </Label>
+                  <Input
+                    id="responsable_solicitud"
+                    name="responsable_solicitud"
+                    value={demand.responsable_solicitud || "Completar datos de perfil para que aparezcan aquí"}
+                    readOnly
+                    className="w-full bg-gray-50 border-gray-200 text-gray-600"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email_contacto" className="text-sm font-medium text-gray-700">
+                    Email de contacto
+                  </Label>
+                  <Input
+                    id="email_contacto"
+                    name="email_contacto"
+                    type="email"
+                    value={profile?.email || "Completar datos de perfil para que aparezcan aquí"}
+                    readOnly
+                    className="w-full bg-gray-50 border-gray-200 text-gray-600"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="telefono" className="text-sm font-medium text-gray-700">
+                    Teléfono de contacto
+                  </Label>
+                  <Input
+                    id="telefono"
+                    name="telefono"
+                    type="tel"
+                    value={demand.telefono || "Completar datos de perfil para que aparezcan aquí"}
+                    readOnly
+                    className="w-full bg-gray-50 border-gray-200 text-gray-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Fechas Automáticas */}
+            <div className="mb-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 className="font-semibold text-blue-800 mb-4 text-lg">Fechas de la Demanda</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="fecha_inicio" className="text-blue-700 font-medium">
+                      Fecha de inicio
+                    </Label>
+                    <Input
+                      id="fecha_inicio"
+                      name="fecha_inicio"
+                      value={formatearFecha(demand.fecha_inicio)}
+                      readOnly
+                      className="border-blue-200 bg-white text-blue-800 font-medium"
+                    />
+                    <p className="text-sm text-blue-600">Fecha automática de creación</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fecha_vencimiento" className="text-blue-700 font-medium">
+                      Fecha de vencimiento
+                    </Label>
+                    <Input
+                      id="fecha_vencimiento"
+                      name="fecha_vencimiento"
+                      value={formatearFecha(demand.fecha_vencimiento)}
+                      readOnly
+                      className="border-blue-200 bg-white text-blue-800 font-medium"
+                    />
+                    <p className="text-sm text-blue-600">Vence 7 días después de la creación</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Categoría y Rubro */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                Detalles de la Demanda
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="id_categoria" className="text-sm font-medium text-gray-700">
+                    Categoría <span className="text-gray-400 text-xs">(Selecciona o crea una nueva)</span>
+                  </Label>
+                  <Select
+                    id="id_categoria"
+                    name="id_categoria"
+                    options={[
+                      ...categorias.map((categoria) => ({ 
+                        value: categoria.id, 
+                        label: categoria.categoria 
+                      })),
+                      { value: "otro", label: "Otro (Agregar nueva categoría)" },
+                    ]}
+                    onChange={(selectedOption) => {
+                      if (selectedOption?.value === "otro") {
+                        setIsCustomCategoria(true);
+                        handleDemandChange("id_categoria", "");
+                      } else {
+                        setIsCustomCategoria(false);
+                        handleDemandChange("id_categoria", selectedOption?.value ?? "");
+                      }
+                    }}
+                    styles={selectStyles}
+                    placeholder="Selecciona una categoría"
+                    className="text-sm"
+                  />
+
+                  {isCustomCategoria && (
+                    <Input
+                      type="text"
+                      placeholder="Ingrese nueva categoría"
+                      value={customCategoria}
+                      onChange={(e) => {
+                        setCustomCategoria(e.target.value);
+                        handleDemandChange("id_categoria", e.target.value);
+                      }}
+                      className="mt-2 border-gray-200 focus:border-blue-500"
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="rubro" className="text-sm font-medium text-gray-700">
+                    Rubro <span className="text-gray-400 text-xs">(Escribe tu rubro para buscar el adecuado)</span>
+                  </Label>
+                  <Select
+                    id="rubro"
+                    name="rubro"
+                    options={[
+                      ...rubros.map((rubro) => ({ value: rubro.id, label: rubro.nombre })),
+                      { value: "otro", label: "Otro (Agregar nuevo rubro)" },
+                    ]}
+                    onChange={(selectedOption) => {
+                      if (selectedOption?.value === "otro") {
+                        setIsCustomRubro(true);
+                        handleDemandChange("rubro", "");
+                      } else {
+                        setIsCustomRubro(false);
+                        handleDemandChange("rubro", selectedOption?.value ?? "");
+                      }
+                    }}
+                    styles={selectStyles}
+                    placeholder="Selecciona un rubro"
+                    className="text-sm"
+                  />
+
+                  {isCustomRubro && (
+                    <Input
+                      type="text"
+                      placeholder="Ingrese nuevo rubro"
+                      value={customRubro}
+                      onChange={(e) => {
+                        setCustomRubro(e.target.value);
+                        handleDemandChange("rubro", e.target.value);
+                      }}
+                      className="mt-2 border-gray-200 focus:border-blue-500"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Detalle */}
+            <div className="mb-8">
+              <div className="space-y-2">
+                <Label htmlFor="detalle" className="text-sm font-medium text-gray-700">
+                  Detalle de la demanda
+                </Label>
+                <textarea
+                  id="detalle"
+                  name="detalle"
+                  placeholder="Describa el detalle de la demanda..."
+                  required
+                  value={demand.detalle}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors"
+                  rows={5}
+                />
+              </div>
+            </div>
+
+            {/* Subida de Imágenes */}
+            {/* <div className="mb-8">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Imágenes de referencia
+                  </Label>
+                  <span className="text-xs text-gray-500">
+                    {images.length}/2 imágenes
+                  </span>
+                </div>
+
+                {/* Botón de subida */}
+                {/* <div className="flex flex-col items-center justify-center">
+                  <label
+                    htmlFor="image-upload"
+                    className={`w-full cursor-pointer border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all hover:border-blue-400 hover:bg-blue-50 ${
+                      images.length >= 2 ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      disabled={images.length >= 2}
+                      className="hidden"
+                    />
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-600">
+                      {images.length >= 2 ? 'Máximo de imágenes alcanzado' : 'Haga clic para agregar imágenes'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PNG, JPG, JPEG hasta 5MB • Máximo 2 imágenes
+                    </p>
+                  </label>
+                </div> */}
+
+                {/* Vista previa de imágenes */}
+                {/* {images.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    {images.map((image) => (
+                      <div
+                        key={image.id}
+                        className="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
+                      >
+                        <img
+                          src={image.preview}
+                          alt="Vista previa"
+                          className="w-full h-48 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(image.id)}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="p-2 bg-white border-t border-gray-200">
+                          <p className="text-xs text-gray-600 truncate">
+                            {image.file.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {(image.file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div> */} 
+
+            {/* Términos y Condiciones */}
+            <div className="mb-8">
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <input
+                  type="checkbox"
+                  id="terminos"
+                  disabled={profile?.terminos === true}
+                  checked={checkedTerminos}
+                  onChange={handleCheckboxChange}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <Label htmlFor="terminos" className="text-sm text-gray-700 flex-1">
+                  Acepto los{" "}
+                  <a 
+                    href="/terminos" 
+                    className="text-blue-600 hover:text-blue-800 underline font-medium transition-colors" 
+                    target="_blank"
+                  >
+                    Términos y Condiciones
+                  </a>
+                  {profile?.terminos === true && (
+                    <span className="text-green-600 text-xs ml-2">✓ Ya aceptados anteriormente</span>
+                  )}
+                </Label>
+              </div>
+            </div>
+
+            {/* Botón de envío */}
+            <div className="flex justify-center">
+              <button 
+                type="submit" 
+                disabled={!checkedTerminos || isUploading}
+                className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creando...
+                  </>
+                ) : (
+                  'Crear Demanda'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }
