@@ -329,109 +329,107 @@ export function CreateDemandForm() {
 
   // En el handleSubmit del componente:
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setStatus(null);
-  setSuccess(null);
+    e.preventDefault();
+    setStatus(null);
+    setSuccess(null);
 
-  // Validación de términos y condiciones
-  if (!checkedTerminos) {
-    setStatus("error");
-    setSuccess("Debes aceptar los términos y condiciones para poder crear la demanda.");
-    return;
-  }
-
-  // Validaciones de campos obligatorios
-  if (!demand.id_categoria) {
-    setStatus("error");
-    setSuccess("Debes seleccionar o crear una categoría para la demanda.");
-    return;
-  }
-
-  if (!demand.rubro) {
-    setStatus("error");
-    setSuccess("Debes seleccionar o crear un rubro para la demanda.");
-    return;
-  }
-
-  if (!demand.detalle || demand.detalle.trim() === '') {
-    setStatus("error");
-    setSuccess("Debes completar el detalle de la demanda.");
-    return;
-  }
-
-  // Validar longitud mínima del detalle
-  if (demand.detalle.trim().length < 10) {
-    setStatus("error");
-    setSuccess("El detalle de la demanda debe tener al menos 10 caracteres.");
-    return;
-  }
-
-  setIsUploading(true);
-
-  try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('No hay sesión activa');
-    }
-    
-    const formData = new FormData();
-    
-    // Agregar datos de la demanda como string
-    formData.append('demandData', JSON.stringify(demand));
-    
-    // Agregar imágenes como archivos (si decides usarlas después)
-    images.forEach((image) => {
-      formData.append('images', image.file);
-    });
-
-    console.log('Enviando formulario con:', {
-      demand,
-      imageCount: images.length
-    });
-
-    const response = await fetch('/api/crear-demanda', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    console.log('Respuesta del servidor:', result);
-
-    if (result.success) {
-      setStatus("success");
-      setSuccess(
-        `Su demanda fue creada correctamente y pasará a evaluarse. ` +
-        `Se subieron ${result.imagesCount} imágenes. ` +
-        `En unos minutos recibirá un correo electrónico con el resultado de la evaluación.`
-      );
-
-      // Limpiar imágenes después de subir exitosamente
-      images.forEach(image => URL.revokeObjectURL(image.preview));
-      setImages([]);
-
-      setTimeout(() => {
-        router.push("/demandas");
-      }, 3000);
-    } else {
+    // Validación de términos y condiciones
+    if (!checkedTerminos) {
       setStatus("error");
-      setSuccess(result.message || "Error al crear la demanda.");
+      setSuccess("Debes aceptar los términos y condiciones para poder crear la demanda.");
+      return;
     }
-  } catch (error) {
-    console.error('Error en la solicitud:', error);
-    setStatus("error");
-    setSuccess("Hubo un problema al procesar la solicitud.");
-  } finally {
-    setIsUploading(false);
-  }
-};
 
-  
+    // Validaciones de campos obligatorios
+    if (!demand.id_categoria) {
+      setStatus("error");
+      setSuccess("Debes seleccionar o crear una categoría para la demanda.");
+      return;
+    }
+
+    if (!demand.rubro) {
+      setStatus("error");
+      setSuccess("Debes seleccionar o crear un rubro para la demanda.");
+      return;
+    }
+
+    if (!demand.detalle || demand.detalle.trim() === '') {
+      setStatus("error");
+      setSuccess("Debes completar el detalle de la demanda.");
+      return;
+    }
+
+    // Validar longitud mínima del detalle
+    if (demand.detalle.trim().length < 10) {
+      setStatus("error");
+      setSuccess("El detalle de la demanda debe tener al menos 10 caracteres.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No hay sesión activa');
+      }
+      
+      const formData = new FormData();
+      
+      // Agregar datos de la demanda como string
+      formData.append('demandData', JSON.stringify(demand));
+      
+      // Agregar imágenes como archivos (si decides usarlas después)
+      images.forEach((image) => {
+        formData.append('images', image.file);
+      });
+
+      console.log('Enviando formulario con:', {
+        demand,
+        imageCount: images.length
+      });
+
+      const response = await fetch('/api/crear-demanda', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      console.log('Respuesta del servidor:', result);
+
+      if (result.success) {
+        setStatus("success");
+        setSuccess(
+          `Su demanda fue creada correctamente y pasará a evaluarse. ` +
+          `Se subieron ${result.imagesCount} imágenes. ` +
+          `En unos minutos recibirá un correo electrónico con el resultado de la evaluación.`
+        );
+
+        // Limpiar imágenes después de subir exitosamente
+        images.forEach(image => URL.revokeObjectURL(image.preview));
+        setImages([]);
+
+        setTimeout(() => {
+          router.push("/demandas");
+        }, 3000);
+      } else {
+        setStatus("error");
+        setSuccess(result.message || "Error al crear la demanda.");
+      }
+    } catch (error) {
+      console.error('Error en la solicitud:', error);
+      setStatus("error");
+      setSuccess("Hubo un problema al procesar la solicitud.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Función para formatear fecha en formato argentino
   const formatearFecha = (fecha: string) => {
@@ -477,7 +475,7 @@ export function CreateDemandForm() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mt-20 mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Nueva Demanda</h1>
           <p className="text-gray-600">Complete el formulario para registrar su necesidad</p>
         </div>
@@ -507,6 +505,8 @@ export function CreateDemandForm() {
                 });
                 setCustomRubro("");
                 setIsCustomRubro(false);
+                setCustomCategoria("");
+                setIsCustomCategoria(false);
               }}
             />
           </div>
@@ -631,6 +631,7 @@ export function CreateDemandForm() {
                 Detalles de la Demanda
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Categoría */}
                 <div className="space-y-2">
                   <Label htmlFor="id_categoria" className="text-sm font-medium text-gray-700">
                     Categoría <span className="text-red-500">*</span>
@@ -649,9 +650,11 @@ export function CreateDemandForm() {
                     onChange={(selectedOption) => {
                       if (selectedOption?.value === "otro") {
                         setIsCustomCategoria(true);
+                        setCustomCategoria("");
                         handleDemandChange("id_categoria", "");
                       } else {
                         setIsCustomCategoria(false);
+                        setCustomCategoria("");
                         handleDemandChange("id_categoria", selectedOption?.value ?? "");
                       }
                     }}
@@ -659,11 +662,36 @@ export function CreateDemandForm() {
                     placeholder="Selecciona una categoría"
                     className="text-sm"
                   />
+                  
+                  {/* Campo para nueva categoría */}
+                  {isCustomCategoria && (
+                    <div className="mt-2 space-y-2">
+                      <Label htmlFor="customCategoria" className="text-sm font-medium text-gray-700">
+                        Nueva Categoría <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="customCategoria"
+                        name="customCategoria"
+                        value={customCategoria}
+                        onChange={(e) => {
+                          setCustomCategoria(e.target.value);
+                          handleDemandChange("id_categoria", e.target.value);
+                        }}
+                        placeholder="Escribe la nueva categoría"
+                        className="w-full"
+                      />
+                      {!customCategoria && (
+                        <p className="text-red-500 text-xs mt-1">* Debes escribir una nueva categoría</p>
+                      )}
+                    </div>
+                  )}
+                  
                   {!demand.id_categoria && (
                     <p className="text-red-500 text-xs mt-1">* La categoría es obligatoria</p>
                   )}
                 </div>
 
+                {/* Rubro */}
                 <div className="space-y-2">
                   <Label htmlFor="rubro" className="text-sm font-medium text-gray-700">
                     Rubro <span className="text-red-500">*</span>
@@ -679,9 +707,11 @@ export function CreateDemandForm() {
                     onChange={(selectedOption) => {
                       if (selectedOption?.value === "otro") {
                         setIsCustomRubro(true);
+                        setCustomRubro("");
                         handleDemandChange("rubro", "");
                       } else {
                         setIsCustomRubro(false);
+                        setCustomRubro("");
                         handleDemandChange("rubro", selectedOption?.value ?? "");
                       }
                     }}
@@ -689,6 +719,30 @@ export function CreateDemandForm() {
                     placeholder="Selecciona un rubro"
                     className="text-sm"
                   />
+                  
+                  {/* Campo para nuevo rubro */}
+                  {isCustomRubro && (
+                    <div className="mt-2 space-y-2">
+                      <Label htmlFor="customRubro" className="text-sm font-medium text-gray-700">
+                        Nuevo Rubro <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="customRubro"
+                        name="customRubro"
+                        value={customRubro}
+                        onChange={(e) => {
+                          setCustomRubro(e.target.value);
+                          handleDemandChange("rubro", e.target.value);
+                        }}
+                        placeholder="Escribe el nuevo rubro"
+                        className="w-full"
+                      />
+                      {!customRubro && (
+                        <p className="text-red-500 text-xs mt-1">* Debes escribir un nuevo rubro</p>
+                      )}
+                    </div>
+                  )}
+                  
                   {!demand.rubro && (
                     <p className="text-red-500 text-xs mt-1">* El rubro es obligatorio</p>
                   )}
