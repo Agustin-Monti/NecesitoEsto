@@ -148,7 +148,7 @@ export default function Footer() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <div>
-                    <p className="text-gray-300 text-sm lg:text-base">Av. Siempre Viva 123</p>
+                    <p className="text-gray-300 text-sm lg:text-base">Int. Alvear 2749 San Andrés CP 1651</p>
                     <p className="text-gray-300 text-sm lg:text-base">Buenos Aires, Argentina</p>
                   </div>
                 </div>
@@ -222,3 +222,4 @@ export default function Footer() {
     </footer>
   );
 }
+
