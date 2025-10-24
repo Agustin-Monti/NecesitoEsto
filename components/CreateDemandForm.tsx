@@ -329,79 +329,107 @@ export function CreateDemandForm() {
 
   // En el handleSubmit del componente:
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus(null);
-    setSuccess(null);
+  e.preventDefault();
+  setStatus(null);
+  setSuccess(null);
 
-    if (!checkedTerminos) {
-      setStatus("error");
-      setSuccess("Debes aceptar los términos y condiciones para poder crear la demanda.");
-      return;
+  // Validación de términos y condiciones
+  if (!checkedTerminos) {
+    setStatus("error");
+    setSuccess("Debes aceptar los términos y condiciones para poder crear la demanda.");
+    return;
+  }
+
+  // Validaciones de campos obligatorios
+  if (!demand.id_categoria) {
+    setStatus("error");
+    setSuccess("Debes seleccionar o crear una categoría para la demanda.");
+    return;
+  }
+
+  if (!demand.rubro) {
+    setStatus("error");
+    setSuccess("Debes seleccionar o crear un rubro para la demanda.");
+    return;
+  }
+
+  if (!demand.detalle || demand.detalle.trim() === '') {
+    setStatus("error");
+    setSuccess("Debes completar el detalle de la demanda.");
+    return;
+  }
+
+  // Validar longitud mínima del detalle
+  if (demand.detalle.trim().length < 10) {
+    setStatus("error");
+    setSuccess("El detalle de la demanda debe tener al menos 10 caracteres.");
+    return;
+  }
+
+  setIsUploading(true);
+
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('No hay sesión activa');
     }
+    
+    const formData = new FormData();
+    
+    // Agregar datos de la demanda como string
+    formData.append('demandData', JSON.stringify(demand));
+    
+    // Agregar imágenes como archivos (si decides usarlas después)
+    images.forEach((image) => {
+      formData.append('images', image.file);
+    });
 
-    setIsUploading(true);
+    console.log('Enviando formulario con:', {
+      demand,
+      imageCount: images.length
+    });
 
-    try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No hay sesión activa');
-      }
-      const formData = new FormData();
-      
-      // Agregar datos de la demanda como string
-      formData.append('demandData', JSON.stringify(demand));
-      
-      // Agregar imágenes como archivos
-      images.forEach((image) => {
-        formData.append('images', image.file);
-      });
+    const response = await fetch('/api/crear-demanda', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: formData,
+    });
 
-      console.log('Enviando formulario con:', {
-        demand,
-        imageCount: images.length
-      });
+    const result = await response.json();
 
-      const response = await fetch('/api/crear-demanda', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}` // ← ESTA LÍNEA ES CLAVE
-        },
-        body: formData, // No headers para FormData
-      });
+    console.log('Respuesta del servidor:', result);
 
-      const result = await response.json();
+    if (result.success) {
+      setStatus("success");
+      setSuccess(
+        `Su demanda fue creada correctamente y pasará a evaluarse. ` +
+        `Se subieron ${result.imagesCount} imágenes. ` +
+        `En unos minutos recibirá un correo electrónico con el resultado de la evaluación.`
+      );
 
-      console.log('Respuesta del servidor:', result);
+      // Limpiar imágenes después de subir exitosamente
+      images.forEach(image => URL.revokeObjectURL(image.preview));
+      setImages([]);
 
-      if (result.success) {
-        setStatus("success");
-        setSuccess(
-          `Su demanda fue creada correctamente y pasará a evaluarse. ` +
-          `Se subieron ${result.imagesCount} imágenes. ` +
-          `En unos minutos recibirá un correo electrónico con el resultado de la evaluación.`
-        );
-
-        // Limpiar imágenes después de subir exitosamente
-        images.forEach(image => URL.revokeObjectURL(image.preview));
-        setImages([]);
-
-        setTimeout(() => {
-          router.push("/demandas");
-        }, 3000);
-      } else {
-        setStatus("error");
-        setSuccess(result.message || "Error al crear la demanda.");
-      }
-    } catch (error) {
-      console.error('Error en la solicitud:', error);
+      setTimeout(() => {
+        router.push("/demandas");
+      }, 3000);
+    } else {
       setStatus("error");
-      setSuccess("Hubo un problema al procesar la solicitud.");
-    } finally {
-      setIsUploading(false);
+      setSuccess(result.message || "Error al crear la demanda.");
     }
-  };
+  } catch (error) {
+    console.error('Error en la solicitud:', error);
+    setStatus("error");
+    setSuccess("Hubo un problema al procesar la solicitud.");
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   
 
@@ -605,7 +633,8 @@ export function CreateDemandForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="id_categoria" className="text-sm font-medium text-gray-700">
-                    Categoría <span className="text-gray-400 text-xs">(Selecciona o crea una nueva)</span>
+                    Categoría <span className="text-red-500">*</span>
+                    <span className="text-gray-400 text-xs">(Selecciona o crea una nueva)</span>
                   </Label>
                   <Select
                     id="id_categoria"
@@ -630,24 +659,15 @@ export function CreateDemandForm() {
                     placeholder="Selecciona una categoría"
                     className="text-sm"
                   />
-
-                  {isCustomCategoria && (
-                    <Input
-                      type="text"
-                      placeholder="Ingrese nueva categoría"
-                      value={customCategoria}
-                      onChange={(e) => {
-                        setCustomCategoria(e.target.value);
-                        handleDemandChange("id_categoria", e.target.value);
-                      }}
-                      className="mt-2 border-gray-200 focus:border-blue-500"
-                    />
+                  {!demand.id_categoria && (
+                    <p className="text-red-500 text-xs mt-1">* La categoría es obligatoria</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="rubro" className="text-sm font-medium text-gray-700">
-                    Rubro <span className="text-gray-400 text-xs">(Escribe tu rubro para buscar el adecuado)</span>
+                    Rubro <span className="text-red-500">*</span>
+                    <span className="text-gray-400 text-xs">(Escribe tu rubro para buscar el adecuado)</span>
                   </Label>
                   <Select
                     id="rubro"
@@ -669,40 +689,36 @@ export function CreateDemandForm() {
                     placeholder="Selecciona un rubro"
                     className="text-sm"
                   />
-
-                  {isCustomRubro && (
-                    <Input
-                      type="text"
-                      placeholder="Ingrese nuevo rubro"
-                      value={customRubro}
-                      onChange={(e) => {
-                        setCustomRubro(e.target.value);
-                        handleDemandChange("rubro", e.target.value);
-                      }}
-                      className="mt-2 border-gray-200 focus:border-blue-500"
-                    />
+                  {!demand.rubro && (
+                    <p className="text-red-500 text-xs mt-1">* El rubro es obligatorio</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Detalle */}
-            <div className="mb-8">
-              <div className="space-y-2">
-                <Label htmlFor="detalle" className="text-sm font-medium text-gray-700">
-                  Detalle de la demanda
-                </Label>
-                <textarea
-                  id="detalle"
-                  name="detalle"
-                  placeholder="Describa el detalle de la demanda..."
-                  required
-                  value={demand.detalle}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors bg-white"
-                  rows={5}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="detalle" className="text-sm font-medium text-gray-700">
+                Detalle de la demanda <span className="text-red-500">*</span>
+              </Label>
+              <textarea
+                id="detalle"
+                name="detalle"
+                placeholder="Describa el detalle de la demanda..."
+                required
+                value={demand.detalle}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors bg-white ${
+                  !demand.detalle ? 'border-red-300' : 'border-gray-200'
+                }`}
+                rows={5}
+              />
+              {!demand.detalle && (
+                <p className="text-red-500 text-xs mt-1">El detalle es obligatorio</p>
+              )}
+              {demand.detalle && demand.detalle.trim().length < 10 && (
+                <p className="text-orange-500 text-xs mt-1">* El detalle debe tener al menos 10 caracteres</p>
+              )}
             </div>
 
             {/* Subida de Imágenes */}
@@ -780,7 +796,7 @@ export function CreateDemandForm() {
             </div> */} 
 
             {/* Términos y Condiciones */}
-            <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-8">
+            <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200 mt-5 mb-8">
               <label className="flex items-center space-x-3 cursor-pointer">
                 <div className="relative">
                   <input
