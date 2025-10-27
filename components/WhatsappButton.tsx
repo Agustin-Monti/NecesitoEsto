@@ -43,7 +43,7 @@ export default function WhatsappButton() {
         transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2
         border-2 border-transparent flex items-center gap-2 animate-bounce-light
         ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"}
-        bottom-36 md:bottom-6 z-40
+        bottom-40 md:bottom-6 z-40
         [&>span]:hidden [&>span]:md:inline
       `}
       style={{ transition: "transform 0.3s ease, opacity 0.3s ease" }}
