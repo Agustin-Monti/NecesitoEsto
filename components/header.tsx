@@ -37,22 +37,22 @@ export const Header = ({ user }: { user: any }) => {
   };
 
   return (
-    <header className="header w-full border-b border-gray-300 py-4 bg-white/95 fixed top-0 left-0 z-50">
+    <header className="header w-full border-b border-gray-300 py-2 md:py-4 bg-white/95 fixed top-0 left-0 z-50">
       {/* Logo y nombre (centrado en móvil, a la izquierda en desktop) */}
-      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-6 gap-4">
+      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 md:px-6 gap-3 md:gap-4">
         {/* Logo con efecto mejorado */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <div className="relative">
             <img
               src="/logoprincipalsf.png"
               alt="Logo de Necesito Esto!"
-              width={52}
-              height={52}
-              className="rounded-lg transition-transform duration-300 hover:scale-105"
+              width={40}
+              height={40}
+              className="rounded-lg transition-transform duration-300 hover:scale-105 md:w-12 md:h-12"
             />
           </div>
           <Link href="/" className="group">
-            <h3 className="text-2xl font-bold">
+            <h3 className="text-xl md:text-2xl font-bold">
               <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-blue-800 transition-all duration-500">
                 Necesito{" "}
                 <span className="relative inline-block">
@@ -100,21 +100,21 @@ export const Header = ({ user }: { user: any }) => {
       {/* Navegación para móvil - CON LOS MISMOS ESTILOS QUE DESKTOP */}
       <div className="fixed bottom-0 left-0 w-full bg-gray-100 border-t border-gray-300 md:hidden py-1">
         <nav>
-          <ul className="flex justify-around items-center px-4">
+          <ul className="flex justify-around items-center px-2">
             {navItems.map(renderNavItem)}
             
             {/* Auth section para móvil */}
             <li className="flex flex-col items-center">
               {!hasEnvVars ? (
-                <div className="flex flex-col items-center gap-1 p-2 rounded-xl">
+                <div className="flex flex-col items-center gap-1 p-1 rounded-xl">
                   <EnvVarWarning />
                 </div>
               ) : user ? (
-                <div className="flex flex-col items-center gap-1 p-2 rounded-xl">
+                <div className="flex flex-col items-center gap-1 p-1 rounded-xl">
                   <HeaderAuth user={user} />
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-1 p-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group">
+                <div className="flex flex-col items-center gap-1 p-1 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 group">
                   <AuthModal />
                 </div>
               )}
