@@ -67,7 +67,7 @@ export default function FloatingButton() {
             focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 
             border-2 border-transparent text-sm whitespace-nowrap
             ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"}
-            fixed bottom-20 right-4 z-40
+            fixed bottom-24 right-4 z-40
           `}
           style={{ transition: "transform 0.3s ease, opacity 0.3s ease" }}
         >
