@@ -5,9 +5,10 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
-export default function ForgotPassword() {
+// Componente principal que usa useSearchParams
+function ForgotPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -175,5 +176,29 @@ export default function ForgotPassword() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Componente principal con Suspense
+export default function ForgotPassword() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-xl mb-20">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-5">
+            <div className="text-center">
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-8"></div>
+                <div className="h-10 bg-gray-200 rounded w-full mb-4"></div>
+                <div className="h-12 bg-gray-200 rounded w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }
