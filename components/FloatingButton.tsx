@@ -71,7 +71,7 @@ export default function FloatingButton() {
           `}
           style={{ transition: "transform 0.3s ease, opacity 0.3s ease" }}
         >
-          Publica tu Necesidad
+          🚀 Publica tu Necesidad
         </Link>
       </div>
 
