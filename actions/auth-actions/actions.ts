@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { headers as getHeaders } from 'next/headers';
+import { revalidatePath } from "next/cache";
 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
@@ -60,7 +61,9 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/sign-in", error.message);
+    console.error("Error de inicio de sesión:", error.message);
+    return { error: "Correo o contraseña incorrectos".normalize("NFC") };
+
   }
 
   return redirect("/");
@@ -86,7 +89,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/forgot-password",
-      "Could not reset password",
+      "No se pudo restablecer la contraseña, intenta mas tarde nuevamente.",
     );
   }
 
@@ -97,49 +100,60 @@ export const forgotPasswordAction = async (formData: FormData) => {
   return encodedRedirect(
     "success",
     "/forgot-password",
-    "Check your email for a link to reset your password.",
+    "Revise su correo electrónico para obtener un enlace para restablecer su contraseña.",
   );
 };
 
 export const resetPasswordAction = async (formData: FormData) => {
   const supabase = await createClient();
-
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
   if (!password || !confirmPassword) {
-    encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Password and confirm password are required",
-    );
+    return { status: "error", message: "Password and confirm password are required" };
   }
 
   if (password !== confirmPassword) {
-    encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Passwords do not match",
-    );
+    return { status: "error", message: "Passwords do not match" };
   }
 
-  const { error } = await supabase.auth.updateUser({
-    password: password,
-  });
+  // Actualiza la contraseña
+  const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Password update failed",
-    );
+    return { status: "error", message: "Password update failed" };
   }
 
-  encodedRedirect("success", "/protected/reset-password", "Password updated");
+  // ✅ IMPORTANTE: Cerrar sesión completamente
+  await supabase.auth.signOut();
+
+  return { status: "success", message: "Password updated. Please log in with your new password." };
 };
 
-export const signOutAction = async () => {
+
+
+export const signOutAction = async (formData?: FormData) => {
+  console.log("🔍 Iniciando signOutAction...");
+  
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  
+  // Verificar sesión actual antes de cerrar
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log("Usuario antes de logout:", user?.email);
+  
+  const { error } = await supabase.auth.signOut();
+  
+  if (error) {
+    console.error("❌ Error al cerrar sesión:", error);
+    return redirect("/error?message=" + encodeURIComponent(error.message));
+  }
+  
+  console.log("✅ Sesión cerrada exitosamente");
+  
+  // Revalidar todas las rutas relevantes
+  revalidatePath("/", "layout");
+  revalidatePath("/profile");
+  
   return redirect("/sign-in");
 };
+
