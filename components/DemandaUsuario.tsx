@@ -20,6 +20,21 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
     getDemandas();
   }, [userId]);
 
+  // Función auxiliar para determinar el estado de una demanda
+  const getEstadoDemanda = (fechaVencimientoStr: string) => {
+    const fechaVencimiento = new Date(fechaVencimientoStr);
+    const hoy = new Date();
+    const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (fechaVencimiento < hoy) {
+      return { estado: 'expired', diferenciaDias };
+    } else if (diferenciaDias <= 2) {
+      return { estado: 'warning', diferenciaDias };
+    } else {
+      return { estado: 'active', diferenciaDias };
+    }
+  };
+
   const handleView = (demanda: any) => {
     setSelectedDemanda(demanda);
     setIsModalOpen(true);
@@ -68,17 +83,21 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
     }
   };
 
-  // Calcular estadísticas
+  // Calcular estadísticas usando la función auxiliar
   const stats = {
     total: demandas.length,
-    activas: demandas.filter(d => new Date(d.fecha_vencimiento) > new Date()).length,
-    porVencer: demandas.filter(d => {
-      const fechaVencimiento = new Date(d.fecha_vencimiento);
-      const hoy = new Date();
-      const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-      return diferenciaDias <= 2 && diferenciaDias >= 0;
+    activas: demandas.filter(d => {
+      const { estado } = getEstadoDemanda(d.fecha_vencimiento);
+      return estado === 'active';
     }).length,
-    vencidas: demandas.filter(d => new Date(d.fecha_vencimiento) < new Date()).length
+    porVencer: demandas.filter(d => {
+      const { estado } = getEstadoDemanda(d.fecha_vencimiento);
+      return estado === 'warning';
+    }).length,
+    vencidas: demandas.filter(d => {
+      const { estado } = getEstadoDemanda(d.fecha_vencimiento);
+      return estado === 'expired';
+    }).length
   };
 
   if (loading) {
@@ -143,21 +162,17 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {demandas.map((demanda) => {
                 const fechaVencimiento = new Date(demanda.fecha_vencimiento);
-                const hoy = new Date();
-                const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                const { estado, diferenciaDias } = getEstadoDemanda(demanda.fecha_vencimiento);
                 
-                let estado = 'active';
                 let estadoColor = 'text-green-600 bg-green-50 border-green-200';
                 let advertencia = null;
 
-                if (diferenciaDias < 0) {
-                  estado = 'expired';
+                if (estado === 'expired') {
                   estadoColor = 'text-red-600 bg-red-50 border-red-200';
                   advertencia = "Demanda Vencida";
-                } else if (diferenciaDias <= 2) {
-                  estado = 'warning';
+                } else if (estado === 'warning') {
                   estadoColor = 'text-yellow-600 bg-yellow-50 border-yellow-200';
-                  advertencia = "La demanda está por vencer.";
+                  advertencia = `La demanda vence en ${diferenciaDias} día${diferenciaDias !== 1 ? 's' : ''}.`;
                 }
 
                 return (
