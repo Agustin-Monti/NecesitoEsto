@@ -24,6 +24,11 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [ordenId, setOrdenId] = useState('');
+  
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6); // 6 demandas por página
+
   const searchParams = useSearchParams();
 
   // Estado para controlar la hidratación
@@ -46,6 +51,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
   const handleCategoriaChange = async (idCategoria: string) => {
     setCategoriaSeleccionada(idCategoria);
     setRubroSeleccionado('');
+    setCurrentPage(1); // Reset a página 1 cuando cambia el filtro
 
     try {
       const demandasFiltradas = idCategoria
@@ -61,6 +67,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
 
   const handleRubroChange = async (idRubro: string) => {
     setRubroSeleccionado(idRubro);
+    setCurrentPage(1); // Reset a página 1 cuando cambia el filtro
 
     try {
       let demandasFiltradas = [...demandas];
@@ -109,13 +116,12 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     }
   
     setFilteredDemandas(demandasFiltradas);
+    setCurrentPage(1); // Reset a página 1 cuando aplican nuevos filtros
   };
-  
 
   useEffect(() => {
     aplicarFiltros(demandas);
   }, [searchQuery, categoriaSeleccionada, rubroSeleccionado, demandas, ordenId]);
-  
 
   const resetFilters = () => {
     setCategoriaSeleccionada('');
@@ -123,6 +129,50 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
     setSearchQuery('');
     setOrdenId('');
     setFilteredDemandas(demandas);
+    setCurrentPage(1); // Reset a página 1 cuando reinician filtros
+  };
+
+  // Cálculos para paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDemandas = filteredDemandas.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredDemandas.length / itemsPerPage);
+
+  // Función para cambiar de página
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // Función para ir a la página siguiente
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Función para ir a la página anterior
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Generar array de números de página para mostrar
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    
+    // Ajustar si estamos cerca del final
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+    
+    return pageNumbers;
   };
 
   // Render simplificado para servidor
@@ -155,7 +205,6 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       </div>
     );
   }
-  
 
   return (
     <div className="mb-4 mt-[6rem] lg:mt-40">
@@ -171,7 +220,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       <div className={`${showFilters ? 'block' : 'hidden'} lg:flex lg:items-center lg:justify-between gap-6 mb-6`}>
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Select
-            instanceId="categoria-select" // ID fijo para SSR
+            instanceId="categoria-select"
             options={categorias
               .slice()
               .sort((a, b) => a.categoria.localeCompare(b.categoria))
@@ -197,7 +246,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Select
-            instanceId="rubro-select" // ID fijo para SSR
+            instanceId="rubro-select"
             options={rubros.map((rubro) => ({
               value: rubro.id,
               label: rubro.nombre,
@@ -216,7 +265,7 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
 
         <div className="w-full lg:w-1/3 mb-4 lg:mb-0">
           <Select
-            instanceId="ordenar-select" // ID fijo para SSR
+            instanceId="ordenar-select"
             options={[
               { value: '', label: 'Ordenar por' },
               { value: 'desc', label: 'Más antiguas primero' },
@@ -254,10 +303,20 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
         </div>
       </div>
 
+      {/* Información de paginación */}
+      <div className="flex justify-between items-center mb-4 text-sm text-gray-600">
+        <div>
+          Mostrando {currentDemandas.length} de {filteredDemandas.length} demandas
+        </div>
+        <div>
+          Página {currentPage} de {totalPages}
+        </div>
+      </div>
+
       {/* Lista de demandas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredDemandas.length > 0 ? (
-          filteredDemandas.map((demanda) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {currentDemandas.length > 0 ? (
+          currentDemandas.map((demanda) => (
             <div
               key={demanda.id}
               className="relative border border-gray-300 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out"
@@ -320,6 +379,52 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
           <p className="col-span-full text-center text-gray-500">No hay demandas disponibles.</p>
         )}
       </div>
+
+      {/* Componente de Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-8">
+          {/* Botón Anterior */}
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg border ${
+              currentPage === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+            }`}
+          >
+            Anterior
+          </button>
+
+          {/* Números de página */}
+          {getPageNumbers().map((number) => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`px-4 py-2 rounded-lg border ${
+                currentPage === number
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              {number}
+            </button>
+          ))}
+
+          {/* Botón Siguiente */}
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg border ${
+              currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+            }`}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
 
       {/* Modal */}
       <ModalDetallesPago isOpen={modalOpen} onClose={cerrarModal} demanda={demandaSeleccionada} userId={userId} />
