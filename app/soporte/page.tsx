@@ -32,7 +32,7 @@ export default function SoportePage() {
           </div>
           <div>
             <label className="block mb-2">Descripción del problema</label>
-            <textarea className="w-full p-2 border rounded h-32"></textarea>
+            <textarea className="w-full p-2 border rounded h-32 bg-white"></textarea>
           </div>
           <button className="bg-blue-600 text-white px-6 py-2 rounded">
             Enviar Solicitud
@@ -41,4 +41,5 @@ export default function SoportePage() {
       </div>
     </div>
   );
+
 }
