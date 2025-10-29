@@ -6,7 +6,7 @@ export default function AvisoLegal() {
     <LegalPageLayout title="Aviso Legal">
       <div className="space-y-8">
         <section className="bg-blue-50 rounded-2xl p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Información General</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Información General Superficial Momentaneamente</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">Razón Social</h3>
@@ -102,4 +102,5 @@ export default function AvisoLegal() {
       </div>
     </LegalPageLayout>
   );
+
 }
