@@ -59,7 +59,7 @@ export async function updateProfileAction(formData: FormData): Promise<{ success
   }
 
   // Procesar rubro
-  let rubro_id = formData.get("rubro") as string;
+  let rubro_id = formData.get("rubro_id") as string;
   const nuevo_rubro = formData.get("nuevo_rubro") as string;
 
   if (!rubro_id && nuevo_rubro) {
