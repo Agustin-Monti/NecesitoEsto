@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import formidable from 'formidable'
 import fs from 'fs'
 
-// Desactivar el bodyParser por defecto
+// Desactivar el bodyParser por defecto de Next.js
 export const config = {
   api: {
     bodyParser: false,
@@ -232,5 +232,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 // Función para obtener extensión del archivo
 function getFileExtension(filename: string): string {
   return filename.split('.').pop() || 'jpg'
-
 }

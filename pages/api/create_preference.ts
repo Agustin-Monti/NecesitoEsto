@@ -7,7 +7,7 @@ const client = new MercadoPagoConfig({
     accessToken: process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN!,
 });
 
-const baseUrl = "https://53fa-181-209-95-211.ngrok-free.app/";
+const baseUrl = "https://4a43-181-209-95-212.ngrok-free.app/";
 
 // Configuración de Supabase
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);

@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           Hola ${nombrePagador},
         </p>
 
-        <p>📌 El pago para la demanda ${demandaData.id}: <strong>${detalle}</strong> ha sido aprobado con éxito. Aquí están los detalles:</p>
+        <p>📌 El pago para la demanda: <strong>${detalle}</strong> ha sido aprobado con éxito. Aquí están los detalles:</p>
 
         <ul style="list-style-type: none; padding: 0;">
           <li style="margin: 10px 0;"><strong>🏢 Empresa:</strong> ${demandaData.empresa}</li>
