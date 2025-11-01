@@ -34,15 +34,16 @@ export default async function Index() {
       <main className={roboto.className}>
         <Hero />
         <div className="container">
-          <div className="flex flex-col justify-center h-auto md:h-[500px] md:text-base text-lg mt-[25px] md:mt-[-70px]">
-              <h1 className="text-4xl font-bold text-slate-800 text-center mt-[20px] md:mt-[200px] mb-3">Nuevas Necesidades Disponibles!</h1>
-              <SliderDemandas demandas={demandas} userId={userId}/>     
-          </div>
 
           <div>
             <Tipos />
           </div>
-
+         
+          <div className="flex flex-col justify-center h-auto md:h-[500px] md:text-base text-lg mt-[25px] md:mt-[-70px]">
+              <h1 className="text-4xl font-bold text-slate-800 text-center mt-[20px] md:mt-[200px] mb-3">Nuevas Necesidades Disponibles!</h1>
+              <SliderDemandas demandas={demandas} userId={userId}/>     
+          </div>
+   
           <div className="">
             <Pasos />
           </div>
