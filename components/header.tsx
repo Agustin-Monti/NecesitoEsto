@@ -37,7 +37,7 @@ export const Header = ({ user }: { user: any }) => {
   };
 
   return (
-    <header className="header w-full border-b border-gray-300 py-2 md:py-4 bg-white/95 fixed top-0 left-0 z-50">
+    <header className="header w-full border-b border-gray-300 py-2 md:py-4 bg-white fixed top-0 left-0 z-50">
       {/* Logo y nombre (centrado en móvil, a la izquierda en desktop) */}
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4 md:px-6 gap-3 md:gap-4">
         {/* Logo con efecto mejorado */}
@@ -130,3 +130,4 @@ export const Header = ({ user }: { user: any }) => {
     </header>
   );
 };
+
