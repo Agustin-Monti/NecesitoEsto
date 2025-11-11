@@ -157,7 +157,6 @@ export default function Hero() {
             <span className="bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent block">
               El Momento
             </span>
-            <br />
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient text-4xl sm:text-5xl md:text-7xl lg:text-8xl block mt-2">
               es Ahora
             </span>
