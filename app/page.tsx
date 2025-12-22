@@ -1,7 +1,7 @@
 // pages/index.js
 import Hero from "@/components/hero";
 import Pasos from "@/components/pasos";
-import Pais from "@/components/paises";
+import Empresas from "@/components/Empresas";
 import SliderDemandas  from "@/components/SliderDemandas";
 import Tipos  from "@/components/tipos";
 import { getAllDemandasLimit } from "@/actions/demanda-actions";
@@ -50,7 +50,7 @@ export default async function Index() {
         </div>
         <Seccion />
         
-        <Pais paises={paises || []} /> 
+        <Empresas /> 
 
         
       </main>
