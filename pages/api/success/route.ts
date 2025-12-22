@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import nodemailer from 'nodemailer';
 
+// ✅ Añade este GET handler
+export async function GET() {
+  return NextResponse.json(
+    { message: 'Método GET no permitido. Usa POST para enviar datos.' },
+    { status: 405 }
+  );
+}
+
 export async function POST(req: Request) {
   const supabase = await createClient();
 
@@ -63,3 +71,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
