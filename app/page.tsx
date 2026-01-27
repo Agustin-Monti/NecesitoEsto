@@ -1,6 +1,6 @@
 // pages/index.js
 import Hero from "@/components/hero";
-import Pasos from "@/components/pasos";
+import PasosConVideo from "@/components/PasosConVideo";
 import Empresas from "@/components/Empresas";
 import SliderDemandas  from "@/components/SliderDemandas";
 import Tipos  from "@/components/tipos";
@@ -45,7 +45,7 @@ export default async function Index() {
           </div>
    
           <div className="">
-            <Pasos />
+            <PasosConVideo />
           </div>
         </div>
         <Seccion />
