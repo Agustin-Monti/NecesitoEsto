@@ -5,6 +5,7 @@ import React from 'react';
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // Componente para partículas que solo se renderiza en el cliente
 const Particles = () => {
@@ -79,6 +80,7 @@ export default function Hero() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -97,6 +99,30 @@ export default function Hero() {
       top: window.innerHeight,
       behavior: 'smooth'
     });
+  };
+
+  const goToVideoDemo = () => {
+    // Primero, navegar a la página principal si no estamos en ella
+    if (window.location.pathname !== '/') {
+      router.push('/?autoplay=true');
+    } else {
+      // Si ya estamos en la página principal, hacer scroll y reproducir
+      const videoSection = document.getElementById('video-demostrativo');
+      if (videoSection) {
+        videoSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // Dar tiempo para el scroll y luego intentar reproducir
+        setTimeout(() => {
+          // Buscar el video dentro de la sección
+          const video = videoSection.querySelector('video');
+          if (video) {
+            video.play().catch(error => {
+              console.error("Error al reproducir automáticamente:", error);
+            });
+          }
+        }, 800);
+      }
+    }
   };
 
   // No renderizar contenido que depende del window hasta que esté montado
@@ -178,13 +204,14 @@ export default function Hero() {
               </button>
             </Link>
             
-            <Link href={`#pasos`} className="w-full sm:w-auto">
-              <button className="group w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white font-semibold rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base">
-                <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  Ver Demostración
-                </span>
-              </button>
-            </Link>
+            <button 
+              onClick={goToVideoDemo}
+              className="group w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white font-semibold rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+            >
+              <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                Ver Video Demostrativo
+              </span>
+            </button>
           </div>
         </div>
       </div>
