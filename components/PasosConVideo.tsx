@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const pasos = [
   {
@@ -27,9 +27,43 @@ const pasos = [
 
 export default function PasosConVideo() {
   const router = useRouter();
-  // Especifica el tipo HTMLVideoElement para el useRef
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Sincronizar eventos del video con el estado
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => setIsPlaying(false);
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
+
+    // Verificar si viene del botón "Ver video demostrativo"
+    const searchParams = new URLSearchParams(window.location.search);
+    const autoplay = searchParams.get('autoplay');
+    
+    if (autoplay === 'true') {
+      // Esperar un momento para asegurar que el componente está cargado
+      setTimeout(() => {
+        if (video) {
+          video.play().catch(error => {
+            console.error("Error al reproducir automáticamente:", error);
+          });
+        }
+      }, 800);
+    }
+
+    return () => {
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, []);
 
   const handleComenzar = () => {
     router.push('/demandas/new');
@@ -40,14 +74,19 @@ export default function PasosConVideo() {
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        videoRef.current.play().catch(error => {
+          console.error("Error al reproducir:", error);
+        });
       }
-      setIsPlaying(!isPlaying);
+      // NOTA: No llamamos setIsPlaying aquí porque los eventos lo manejarán
     }
   };
 
   return (
-    <section className="py-24 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
+    <section 
+      id="video-demostrativo"
+      className="py-24 bg-gradient-to-br from-gray-50 to-white overflow-hidden scroll-mt-20"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Encabezado */}
         <div className="text-center mb-16">
@@ -67,51 +106,54 @@ export default function PasosConVideo() {
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
           
           {/* Columna Izquierda - Video */}
-            <div className="order-2 lg:order-1">
-            <div className="relative max-w-xs mx-auto lg:max-w-sm"> {/* Cambiado de max-w-sm a max-w-xs */}
-                {/* Marco del teléfono con efectos - REDUCIDO */}
-                <div className="relative bg-black rounded-[30px] md:rounded-[40px] p-2 md:p-3 shadow-2xl shadow-blue-500/20"> {/* Reducido padding y border-radius */}
+          <div className="order-2 lg:order-1">
+            <div className="relative max-w-xs mx-auto lg:max-w-sm">
+              {/* Marco del teléfono con efectos - REDUCIDO */}
+              <div className="relative bg-black rounded-[30px] md:rounded-[40px] p-2 md:p-3 shadow-2xl shadow-blue-500/20">
                 {/* Parte superior del teléfono - MÁS PEQUEÑO */}
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 md:w-24 h-4 bg-black rounded-b-xl z-10"></div> {/* Reducido */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 md:w-24 h-4 bg-black rounded-b-xl z-10"></div>
                 
                 {/* Contenedor del video */}
-                <div className="relative aspect-[9/16] rounded-[24px] md:rounded-[32px] overflow-hidden"> {/* Reducido border-radius */}
-                    <video
+                <div className="relative aspect-[9/16] rounded-[24px] md:rounded-[32px] overflow-hidden">
+                  <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
                     playsInline
                     poster="/thumbnail.png"
                     onClick={togglePlay}
-                    >
+                    // Eventos adicionales para mejor sincronización
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                  >
                     <source src="/videopromocional.mp4" type="video/mp4" />
                     Tu navegador no soporta videos HTML5.
-                    </video>
-                    
-                    {/* Overlay con botón de play - MÁS PEQUEÑO */}
-                    {!isPlaying && (
+                  </video>
+                  
+                  {/* Overlay con botón de play - SOLO se muestra si NO está reproduciendo */}
+                  {!isPlaying && (
                     <div 
-                        className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer group"
-                        onClick={togglePlay}
+                      className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer group transition-opacity duration-300"
+                      onClick={togglePlay}
                     >
-                        <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-300">
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-white/95 rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-300">
                         <svg className="w-6 h-6 md:w-8 md:h-8 text-blue-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
+                          <path d="M8 5v14l11-7z"/>
                         </svg>
-                        </div>
+                      </div>
                     </div>
-                    )}
+                  )}
                 </div>
                 
                 {/* Botón home - MÁS PEQUEÑO */}
                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-10 h-1 bg-gray-800 rounded-full"></div>
-                </div>
-                
-                {/* Etiqueta - MÁS PEQUEÑA */}
-                <div className="absolute -top-3 -right-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-3 py-1 rounded-lg shadow-lg text-xs">
+              </div>
+              
+              {/* Etiqueta - MÁS PEQUEÑA */}
+              <div className="absolute -top-3 -right-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-3 py-1 rounded-lg shadow-lg text-xs">
                 <span className="font-semibold">Video explicativo</span>
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
 
           {/* Columna Derecha - Pasos */}
           <div className="order-1 lg:order-2 space-y-8">
@@ -173,9 +215,13 @@ export default function PasosConVideo() {
                   className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl border border-blue-200 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
+                    {isPlaying ? (
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    ) : (
+                      <path d="M8 5v14l11-7z"/>
+                    )}
                   </svg>
-                  {isPlaying ? 'Pausar video' : 'Ver video explicativo'}
+                  {isPlaying ? 'Pausar video' : 'Ver video Demostrativo'}
                 </button>
               </div>
             </div>
