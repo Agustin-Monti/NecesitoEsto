@@ -246,7 +246,7 @@ export function InitialProfileForm() {
                   setFormData(prev => ({ ...prev, pais_id: value }));
                 }}
                 required
-                className="w-full p-2 border rounded-md"
+                className="w-full p-2 border rounded-md bg-white"
               >
                 <option value="">Seleccione...</option>
                 {paises.map((pais) => (
@@ -473,3 +473,4 @@ export function InitialProfileForm() {
     </div>
   );
 }
+
