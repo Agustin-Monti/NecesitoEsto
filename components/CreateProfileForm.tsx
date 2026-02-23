@@ -267,7 +267,7 @@ export function InitialProfileForm() {
                       setFormData((prev) => ({ ...prev, nuevo_pais: e.target.value }))
                     }
                     required
-                    className="border p-2 mb-2 mt-2 border-solid border-slate-950"
+                    className="border p-2 mb-2 mt-2 border-solid border-slate-950 bg-white"
                   />
                 </div>
               )}
@@ -368,7 +368,7 @@ export function InitialProfileForm() {
                     }
                   }}
                   required={!isCustomCategoria} // ← Aquí se desactiva el required si escribes una categoría nueva
-                  className="w-full p-2 border border-solid border-slate-950"
+                  className="w-full p-2 border border-solid border-slate-950 bg-white"
                 >
                   <option value="">Selecciona una categoría</option>
                   {categorias
@@ -392,7 +392,7 @@ export function InitialProfileForm() {
                       setFormData((prev) => ({ ...prev, nueva_categoria: e.target.value }))
                     }
                     required
-                    className="border p-2 mb-2 mt-2 border-solid border-slate-950"
+                    className="border p-2 mb-2 mt-2 border-solid border-slate-950 bg-white"
                   />
                 )}
             </div>
@@ -416,7 +416,7 @@ export function InitialProfileForm() {
                       }
                     }}
                     required={!isCustomRubro}
-                    className="w-full p-2 border border-solid border-slate-950"
+                    className="w-full p-2 border border-solid border-slate-950 bg-white"
                   >
                   <option value="">Selecciona un rubro</option>
                   {rubros
@@ -440,27 +440,31 @@ export function InitialProfileForm() {
                       setFormData((prev) => ({ ...prev, nuevo_rubro: e.target.value }))
                     }
                     required
-                    className="border p-2 mb-2 mt-2 border-solid border-slate-950"
+                    className="border p-2 mb-2 mt-2 border-solid border-slate-950 bg-white"
                   />
                 )}
             </div>
 
-            {/* Checkbox Términos y Condiciones */}
+            {/* Checkbox con fondo blanco forzado */}
             <div className="flex items-center space-x-2 mt-6">
               <input
                 id="terminos"
                 type="checkbox"
                 checked={aceptaTerminos}
                 onChange={(e) => setAceptaTerminos(e.target.checked)}
-                className="w-4 h-4"
+                className="w-4 h-4 appearance-none checked:appearance-auto bg-white border border-gray-400 rounded 
+                          checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-200 
+                          cursor-pointer transition-all duration-200"
+                style={{ 
+                  backgroundColor: 'white', 
+                  accentColor: '#2563eb' // Forza el color del checkbox en algunos navegadores
+                }}
                 required
               />
-              <Label htmlFor="terminos">
-                Acepto los <a href="/terminos" className="text-blue-600 underline" target="_blank">Términos y Condiciones</a> *
+              <Label htmlFor="terminos" className="cursor-pointer select-none">
+                Acepto los <a href="/terminos" className="text-blue-600 underline hover:text-blue-800" target="_blank">Términos y Condiciones</a> *
               </Label>
             </div>
-
-
         </div>
 
         <button
@@ -473,4 +477,3 @@ export function InitialProfileForm() {
     </div>
   );
 }
-
