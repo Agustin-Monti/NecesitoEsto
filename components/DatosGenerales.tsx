@@ -275,7 +275,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                           setProfile({ ...profile, pais_id: e.target.value });
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                     >
                       <option value="">Seleccione un país</option>
                       {paises.map((pais) => (
@@ -289,7 +289,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                         value={nuevoPais}
                         onChange={(e) => setNuevoPais(e.target.value)}
                         placeholder="Ingresa el nuevo país"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                       />
                     )}
                   </div>
@@ -380,7 +380,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                           setProfile({ ...profile, id_categoria: e.target.value });
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                     >
                       <option value="">Seleccione una categoría</option>
                       {categorias
@@ -396,7 +396,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                         placeholder="Nueva categoría"
                         value={nuevaCategoria}
                         onChange={(e) => setNuevaCategoria(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                       />
                     )}
                   </div>
@@ -414,7 +414,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                           setProfile({ ...profile, rubro_id: e.target.value });
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                     >
                       <option value="">Seleccione un rubro</option>
                       {rubros
@@ -430,7 +430,7 @@ const DatosGenerales: React.FC<DatosGeneralesProps> = ({ data }) => {
                         placeholder="Nuevo rubro"
                         value={nuevoRubro}
                         onChange={(e) => setNuevoRubro(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                       />
                     )}
                   </div>
