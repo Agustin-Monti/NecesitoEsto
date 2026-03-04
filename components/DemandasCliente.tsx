@@ -316,65 +316,114 @@ export default function DemandasCliente({ demandas, userId, categorias }: Demand
       {/* Lista de demandas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {currentDemandas.length > 0 ? (
-          currentDemandas.map((demanda) => (
-            <div
-              key={demanda.id}
-              className="relative border border-gray-300 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out"
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">[{demanda.id}] </p>
-                <h3 className="text-lg font-semibold truncate">{demanda.detalle}</h3>
-                {demanda.pais && demanda.pais.bandera_url && (
-                  <Image
-                    src={demanda.pais.bandera_url}
-                    alt={`Bandera de ${demanda.pais.nombre}`}
-                    width={20}
-                    height={12}
-                    className="ml-2"
-                  />
-                )}
-              </div>
-              <p className="text-gray-700 mt-2">
-                <strong>Categoría:&nbsp;</strong> {demanda.categorias?.categoria || 'Sin categoría'}
-              </p>
-              <p className="text-gray-700 mt-2">
-                <strong>Rubro:&nbsp;</strong> {demanda.rubros?.nombre || "Sin rubro"}
-              </p>
-              <p className="text-gray-700 mt-2">
-                <strong>Fecha de inicio:&nbsp;</strong>{' '}
-                {new Date(demanda.fecha_inicio).toLocaleDateString()}
-              </p>
-              <p className="text-gray-700 mt-2">
-                <strong>Fecha de vencimiento:&nbsp;</strong>{' '}
-                {new Date(demanda.fecha_vencimiento).toLocaleDateString()}
-                {(() => {
-                  const fechaVencimiento = new Date(demanda.fecha_vencimiento);
-                  const fechaActual = new Date();
-                  const diasRestantes = Math.ceil(
-                    (fechaVencimiento.getTime() - fechaActual.getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  );
-                  return diasRestantes > 0
-                    ? ` (Faltan ${diasRestantes} días)`
-                    : ` (¡Venció hace ${Math.abs(diasRestantes)} días!)`;
-                })()}
-              </p>
+          currentDemandas.map((demanda) => {
+            const esNueva =
+              new Date(demanda.fecha_inicio) >
+              new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-              {/* Botón "Saber más" con estilos mejorados */}
-              <div className="mt-4">
-                <div className="flex items-center justify-center mt-auto">
-                  <span className="flex-grow border-t border-gray-300 mr-2"></span>
-                  <button
-                    onClick={() => abrirModal(demanda)}
-                    className="py-2 px-6 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 focus:outline-none transition-colors duration-300"
-                  >
-                    Saber más
-                  </button>
-                  <span className="flex-grow border-t border-gray-300 ml-2"></span>
+            const fechaVencimiento = new Date(demanda.fecha_vencimiento);
+            const fechaActual = new Date();
+            const diasRestantes = Math.ceil(
+              (fechaVencimiento.getTime() - fechaActual.getTime()) /
+                (1000 * 60 * 60 * 24)
+            );
+
+            return (
+              <div
+                key={demanda.id}
+                className={`
+                  relative bg-white rounded-2xl p-6
+                  flex flex-col
+                  transition-all duration-300
+                  hover:-translate-y-1 hover:shadow-xl
+                  ${
+                    esNueva
+                      ? "border-2 border-yellow-400 shadow-md"
+                      : "border border-gray-200 shadow-sm"
+                  }
+                `}
+              >
+                {/* Badge NUEVO flotante */}
+                {esNueva && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-white text-xs font-bold px-4 py-1 rounded-full shadow">
+                    NUEVO
+                  </div>
+                )}
+
+                <div className="flex-1">
+
+                  {/* Header */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-400 font-medium">
+                      #{demanda.id}
+                    </span>
+
+                    {demanda.pais?.bandera_url && (
+                      <Image
+                        src={demanda.pais.bandera_url}
+                        alt={`Bandera de ${demanda.pais.nombre}`}
+                        width={24}
+                        height={16}
+                        className="rounded-sm object-cover"
+                      />
+                    )}
+                  </div>
+
+                  {/* Título */}
+                  <h3 className="text-xl font-semibold mt-3 line-clamp-2">
+                    {demanda.detalle}
+                  </h3>
+
+                  <div className="border-t my-4"></div>
+
+                  {/* Información */}
+                  <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                    <div>
+                      <p className="font-medium text-gray-800">Categoría</p>
+                      <p>{demanda.categorias?.categoria || "Sin categoría"}</p>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-gray-800">Rubro</p>
+                      <p>{demanda.rubros?.nombre || "Sin rubro"}</p>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-gray-800">Inicio</p>
+                      <p>{new Date(demanda.fecha_inicio).toLocaleDateString()}</p>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-gray-800">Vence</p>
+                      <p>{new Date(demanda.fecha_vencimiento).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
+                  {/* Estado vencimiento */}
+                  <div className="mt-4 text-sm font-medium">
+                    {diasRestantes > 0 ? (
+                      <span className="text-green-600">
+                        Faltan {diasRestantes} días
+                      </span>
+                    ) : (
+                      <span className="text-red-600">
+                        Venció hace {Math.abs(diasRestantes)} días
+                      </span>
+                    )}
+                  </div>
+
                 </div>
+
+                {/* Botón */}
+                <button
+                  onClick={() => abrirModal(demanda)}
+                  className="mt-auto w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition font-medium"
+                >
+                  Ver detalles
+                </button>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <p className="col-span-full text-center text-gray-500">No hay demandas disponibles.</p>
         )}
