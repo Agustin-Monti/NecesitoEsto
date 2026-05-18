@@ -239,7 +239,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
                           className="flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-3 sm:px-4 rounded-lg transition-colors duration-200 text-sm"
                         >
                           <EyeIcon className="w-4 h-4" />
-                          <span>Ver Demanda</span>
+                          <span>Ver Demanda / Renovar</span>
                         </button>
                         <button
                           onClick={() => handleDelete(demanda.id)}
