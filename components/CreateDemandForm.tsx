@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import Select from "react-select";
 import { Alert } from "@/components/ui/alert";
 import dynamic from 'next/dynamic';
-import "react-date-picker/dist/DatePicker.css";
-import "react-calendar/dist/Calendar.css";
 import { useRouter } from "next/navigation";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 
@@ -77,23 +75,7 @@ export function CreateDemandForm() {
   };
 
   // Función para calcular fechas automáticamente
-  const calcularFechas = () => {
-    const fechaInicio = obtenerFechaArgentina();
-    
-    // Calcular vencimiento (7 días después)
-    const fechaInicioObj = new Date(fechaInicio);
-    const fechaVencimientoObj = new Date(fechaInicioObj);
-    fechaVencimientoObj.setDate(fechaVencimientoObj.getDate() + 7);
-    
-    const añoVenc = fechaVencimientoObj.getFullYear();
-    const mesVenc = String(fechaVencimientoObj.getMonth() + 1).padStart(2, '0');
-    const diaVenc = String(fechaVencimientoObj.getDate()).padStart(2, '0');
-    
-    return {
-      inicio: fechaInicio,
-      vencimiento: `${añoVenc}-${mesVenc}-${diaVenc}`
-    };
-  };
+ 
 
   useEffect(() => {
     console.log("Estado actualizado:", status, success);
@@ -149,7 +131,6 @@ export function CreateDemandForm() {
           setCheckedTerminos(isTerminosAceptados);
 
           // Calcular fechas automáticamente
-          const fechas = calcularFechas();
   
           // 2. Obtener el nombre del país SOLO si el perfil tiene pais_id
           let nombrePais = "País no especificado";
@@ -175,15 +156,8 @@ export function CreateDemandForm() {
             empresa: profileData.empresa || "",
             pais_id: profileData.pais_id || "",
             nombre_pais: nombrePais,
-            fecha_inicio: fechas.inicio,
-            fecha_vencimiento: fechas.vencimiento
           }));
 
-          console.log("Fechas calculadas:", {
-            inicio: fechas.inicio,
-            vencimiento: fechas.vencimiento,
-            fechaActual: new Date().toLocaleDateString('es-AR')
-          });
         }
         setUser(user);
       }
@@ -237,6 +211,7 @@ export function CreateDemandForm() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-lg font-medium text-gray-600">Cargando formulario...</p>
+          <p className="text-lg font-medium text-gray-600">No Podras Crear Una Demanda Si no tienes una cuenta e iniciado sesión.</p>
         </div>
       </div>
     );
@@ -594,32 +569,60 @@ export function CreateDemandForm() {
             <div className="mb-8">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
                 <h3 className="font-semibold text-blue-800 mb-4 text-lg">Fechas de la Demanda</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="fecha_inicio" className="text-blue-700 font-medium">
-                      Fecha de inicio
-                    </Label>
-                    <Input
-                      id="fecha_inicio"
-                      name="fecha_inicio"
-                      value={formatearFecha(demand.fecha_inicio)}
-                      readOnly
-                      className="border-blue-200 bg-white text-blue-800 font-medium"
-                    />
-                    <p className="text-sm text-blue-600">Fecha automática de creación</p>
+                
+                {/* Mensaje informativo sobre el proceso */}
+                <div className="bg-white border border-blue-100 rounded-lg p-4 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      <p className="font-medium text-blue-800 mb-1">Proceso de validación y duración de la demanda</p>
+                      <p className="mb-2">
+                        Las demandas tienen una duración de <span className="font-semibold">7 días corridos</span> a partir de su 
+                        <span className="font-semibold text-blue-600"> aprobación por parte de nuestro equipo</span>. 
+                        El proceso de revisión y validación puede demorar entre 24 y 48 horas hábiles.
+                      </p>
+                      <div className="flex items-start space-x-2 text-xs text-gray-500 mt-3 bg-gray-50 rounded-lg p-3">
+                        <svg className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M12 9v2m0 4h.01M12 3l9.66 4.79a2 2 0 011.34 1.83V16a2 2 0 01-2 2H3a2 2 0 01-2-2V9.62a2 2 0 011.34-1.83L12 3z" />
+                        </svg>
+                        <p>
+                          <span className="font-medium">Importante:</span> El contador de los 7 días comenzará automáticamente cuando nuestro equipo apruebe su demanda. 
+                          Recibirá una notificación por correo electrónico con la fecha exacta de inicio y vencimiento.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fecha_vencimiento" className="text-blue-700 font-medium">
-                      Fecha de vencimiento
-                    </Label>
-                    <Input
-                      id="fecha_vencimiento"
-                      name="fecha_vencimiento"
-                      value={formatearFecha(demand.fecha_vencimiento)}
-                      readOnly
-                      className="border-blue-200 bg-white text-blue-800 font-medium"
-                    />
-                    <p className="text-sm text-blue-600">Vence 7 días después de la creación</p>
+                </div>
+                
+                {/* Timeline visual del proceso */}
+                <div className="mt-6 pt-4 border-t border-blue-200">
+                  <p className="text-sm font-medium text-blue-700 mb-3">Flujo del proceso:</p>
+                  <div className="flex items-center justify-between text-xs text-blue-600">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold mb-1">1</div>
+                      <span>Creación</span>
+                    </div>
+                    <div className="flex-1 h-0.5 bg-blue-300 mx-2"></div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex items-center justify-center font-bold mb-1">2</div>
+                      <span>Revisión</span>
+                    </div>
+                    <div className="flex-1 h-0.5 bg-blue-300 mx-2"></div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex items-center justify-center font-bold mb-1">3</div>
+                      <span>Aprobación</span>
+                    </div>
+                    <div className="flex-1 h-0.5 bg-blue-300 mx-2"></div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mb-1">4</div>
+                      <span>7 días activa</span>
+                    </div>
                   </div>
                 </div>
               </div>
