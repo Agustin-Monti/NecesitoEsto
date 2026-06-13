@@ -239,19 +239,31 @@ export const fetchDemandas = async (userId: string) => {
     const { data, error } = await supabase
       .from("demandas")
       .select(`
-        id, empresa, responsable_solicitud, email_contacto, telefono, fecha_inicio, fecha_vencimiento, detalle, 
+        id, 
+        empresa, 
+        responsable_solicitud, 
+        email_contacto, 
+        telefono, 
+        fecha_inicio, 
+        fecha_vencimiento, 
+        detalle,
+        estado,
+        status,
         pais (nombre, bandera_url), 
         categorias (id, categoria), 
         rubros (id, nombre)
       `)
-      .eq("profile_id", userId) 
-      .eq("status", true); // Solo obtener demandas activas
+      .eq("profile_id", userId)
+      .eq("status", true) // Solo obtener demandas activas (no eliminadas)
+      .order("id", { ascending: false }); // Ordenar por las más recientes primero
 
     if (error) {
       console.error("Error al obtener demandas:", error.message);
       return [];
     }
 
+    console.log('📦 Demandas obtenidas del backend:', data); // Debug
+    
     return data || [];  // Devuelve las demandas obtenidas, o un array vacío si no hay datos
 
   } catch (error) {
