@@ -3,7 +3,7 @@ import { fetchDemandas, deleteDemanda } from '@/actions/demanda-actions';
 import ModalDemandaUsuario from '@/components/ModalDemandaUsuario';
 import Link from 'next/link';
 import Swal from "sweetalert2";
-import { EyeIcon, TrashIcon, ExclamationTriangleIcon, PlusIcon } from '@heroicons/react/24/solid';
+import { EyeIcon, TrashIcon, ExclamationTriangleIcon, PlusIcon, ClockIcon } from '@heroicons/react/24/solid';
 
 const DemandaUsuario = ({ userId }: { userId: string }) => {
   const [demandas, setDemandas] = useState<any[]>([]);
@@ -14,6 +14,27 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
   useEffect(() => {
     const getDemandas = async () => {
       const data = await fetchDemandas(userId);
+      
+      // 🔍 DEBUG: Ver todos los datos que llegan del backend
+      console.log("=== DEMANDAS RECIBIDAS DEL BACKEND ===");
+      console.log("Cantidad de demandas:", data.length);
+      console.log("Datos completos:", data);
+      
+      // 🔍 DEBUG: Ver el estado de cada demanda
+      data.forEach((demanda: any, index: number) => {
+        console.log(`\n--- Demanda #${index + 1} ---`);
+        console.log("ID:", demanda.id);
+        console.log("Estado:", demanda.estado);
+        console.log("¿Tiene fecha_inicio?:", demanda.fecha_inicio ? "SÍ" : "NO");
+        console.log("fecha_inicio:", demanda.fecha_inicio);
+        console.log("¿Tiene fecha_vencimiento?:", demanda.fecha_vencimiento ? "SÍ" : "NO");
+        console.log("fecha_vencimiento:", demanda.fecha_vencimiento);
+        console.log("Empresa:", demanda.empresa);
+        console.log("Categoría:", demanda.categorias?.categoria);
+        console.log("Rubro:", demanda.rubros?.nombre);
+        console.log("Todos los campos:", Object.keys(demanda));
+      });
+      
       setDemandas(data);
       setLoading(false);
     };
@@ -21,27 +42,45 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
   }, [userId]);
 
   // Función auxiliar para determinar el estado de una demanda
-  const getEstadoDemanda = (fechaVencimientoStr: string) => {
-    const fechaVencimiento = new Date(fechaVencimientoStr);
+  const getEstadoDemanda = (demanda: any) => {
+    
+    // Si la demanda está pendiente, no verificamos fechas
+    if (demanda.estado === 'pendiente') {
+      return { estado: 'pending', diferenciaDias: 0 };
+    }
+    
+    
+    // Verificar si fecha_vencimiento existe
+    if (!demanda.fecha_vencimiento) {
+      return { estado: 'active', diferenciaDias: 7 };
+    }
+    
+    const fechaVencimiento = new Date(demanda.fecha_vencimiento);
     const hoy = new Date();
     const diferenciaDias = Math.ceil((fechaVencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
     
     if (fechaVencimiento < hoy) {
+      console.log("  🔴 ESTADO: Vencida");
       return { estado: 'expired', diferenciaDias };
     } else if (diferenciaDias <= 2) {
+      console.log("  🟡 ESTADO: Por vencer");
       return { estado: 'warning', diferenciaDias };
     } else {
+      console.log("  🟢 ESTADO: Activa");
       return { estado: 'active', diferenciaDias };
     }
   };
 
   const handleView = (demanda: any) => {
+    console.log("👁️ Ver demanda:", demanda.id, "- Estado:", demanda.estado);
     setSelectedDemanda(demanda);
     setIsModalOpen(true);
   };
 
   const reloadDemandas = async () => {
     const data = await fetchDemandas(userId);
+    console.log("🔄 Recargando demandas...");
+    console.log("Nuevos datos:", data);
     setDemandas(data);
   };
 
@@ -83,22 +122,29 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
     }
   };
 
-  // Calcular estadísticas usando la función auxiliar
+  // Calcular estadísticas
   const stats = {
     total: demandas.length,
+    pendientes: demandas.filter(d => {
+      const isPending = d.estado === 'pendiente';
+      return isPending;
+    }).length,
     activas: demandas.filter(d => {
-      const { estado } = getEstadoDemanda(d.fecha_vencimiento);
+      const { estado } = getEstadoDemanda(d);
       return estado === 'active';
     }).length,
     porVencer: demandas.filter(d => {
-      const { estado } = getEstadoDemanda(d.fecha_vencimiento);
+      const { estado } = getEstadoDemanda(d);
       return estado === 'warning';
     }).length,
     vencidas: demandas.filter(d => {
-      const { estado } = getEstadoDemanda(d.fecha_vencimiento);
+      const { estado } = getEstadoDemanda(d);
       return estado === 'expired';
-    }).length
+    }).length,
+    aprobadas: demandas.filter(d => d.estado === 'aprobada').length
   };
+  
+ 
 
   if (loading) {
     return (
@@ -114,7 +160,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-        {/* Header - Optimizado para diferentes resoluciones */}
+        {/* Header */}
         <div className="text-center mt-8 sm:mt-12 md:mt-16">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             Mis Demandas
@@ -146,11 +192,15 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
           </div>
         ) : (
           <>
-            {/* Stats - Grid responsive con breakpoints específicos */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+            {/* Stats - Grid responsive */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
               <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-gray-200">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total Demandas</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total</p>
                 <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+              <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-gray-200">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Pendientes</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">{stats.pendientes}</p>
               </div>
               <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-gray-200">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Activas</p>
@@ -166,12 +216,76 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
               </div>
             </div>
 
-            {/* Grid de Demandas - Optimizado para 1366x768 y tablets */}
+            {/* Grid de Demandas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
               {demandas.map((demanda) => {
-                const fechaVencimiento = new Date(demanda.fecha_vencimiento);
-                const { estado, diferenciaDias } = getEstadoDemanda(demanda.fecha_vencimiento);
+                console.log(`\n🎨 RENDERIZANDO TARJETA - Demanda ID: ${demanda.id}`);
+                console.log("  - Estado:", demanda.estado);
+                console.log("  - ¿Es pendiente?:", demanda.estado === 'pendiente');
                 
+                const { estado } = getEstadoDemanda(demanda);
+                
+                // Si la demanda está pendiente, mostrar versión simplificada
+                if (demanda.estado === 'pendiente') {
+                  console.log("  ✅ Renderizando TARJETA PENDIENTE");
+                  return (
+                    <div 
+                      key={demanda.id} 
+                      className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-blue-200 hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col h-full"
+                    >
+                      {/* Header con ID y Estado Pendiente */}
+                      <div className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white">
+                        <div className="flex justify-between items-start mb-2 gap-2">
+                          <span className="text-xs sm:text-sm font-medium text-gray-500 truncate">
+                            ID: {demanda.id}
+                          </span>
+                          <span className="text-xs font-medium px-2 py-1 rounded-full border bg-blue-50 text-blue-600 border-blue-200 whitespace-nowrap">
+                            Pendiente
+                          </span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 leading-tight">
+                          {demanda.detalle}
+                        </h3>
+                      </div>
+
+                      {/* Contenido simplificado */}
+                      <div className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 space-y-2 sm:space-y-3 flex-grow">
+                        <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
+                          <span className="font-medium mr-2 mb-1 sm:mb-0">Empresa:</span>
+                          <span className="truncate">{demanda.empresa}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
+                          <span className="font-medium mr-2 mb-1 sm:mb-0">Categoría:</span>
+                          <span className="truncate">{demanda.categorias?.categoria || "Sin Categoría"}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
+                          <span className="font-medium mr-2 mb-1 sm:mb-0">Rubro:</span>
+                          <span className="truncate">{demanda.rubros?.nombre || "Sin Rubro"}</span>
+                        </div>
+
+                        {/* Mensaje de pendiente */}
+                        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <ClockIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-blue-800 mb-1">
+                                Demanda Pendiente de Aprobación
+                              </p>
+                              <p className="text-xs text-blue-600">
+                                Nuestro equipo está revisando tu demanda. Te notificaremos por email cuando sea aprobada.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                console.log("  ✅ Renderizando TARJETA APROBADA");
+                
+                // Si la demanda está aprobada, mostrar versión completa
+                const fechaVencimiento = demanda.fecha_vencimiento ? new Date(demanda.fecha_vencimiento) : null;
                 let estadoColor = 'text-green-600 bg-green-50 border-green-200';
                 let advertencia = null;
 
@@ -180,7 +294,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
                   advertencia = "Demanda Vencida";
                 } else if (estado === 'warning') {
                   estadoColor = 'text-yellow-600 bg-yellow-50 border-yellow-200';
-                  advertencia = `La demanda vence en ${diferenciaDias} día${diferenciaDias !== 1 ? 's' : ''}.`;
+                  advertencia = `La demanda vence en ${getEstadoDemanda(demanda).diferenciaDias} día${getEstadoDemanda(demanda).diferenciaDias !== 1 ? 's' : ''}.`;
                 }
 
                 return (
@@ -203,7 +317,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
                       </h3>
                     </div>
 
-                    {/* Contenido */}
+                    {/* Contenido completo */}
                     <div className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 space-y-2 sm:space-y-3 flex-grow">
                       <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
                         <span className="font-medium mr-2 mb-1 sm:mb-0">Empresa:</span>
@@ -217,10 +331,18 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
                         <span className="font-medium mr-2 mb-1 sm:mb-0">Rubro:</span>
                         <span className="truncate">{demanda.rubros?.nombre || "Sin Rubro"}</span>
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
-                        <span className="font-medium mr-2 mb-1 sm:mb-0">Vence:</span>
-                        <span>{fechaVencimiento.toLocaleDateString('es-AR')}</span>
-                      </div>
+                      {demanda.fecha_inicio && (
+                        <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
+                          <span className="font-medium mr-2 mb-1 sm:mb-0">Inicio:</span>
+                          <span>{new Date(demanda.fecha_inicio).toLocaleDateString('es-AR')}</span>
+                        </div>
+                      )}
+                      {fechaVencimiento && (
+                        <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-600">
+                          <span className="font-medium mr-2 mb-1 sm:mb-0">Vence:</span>
+                          <span>{fechaVencimiento.toLocaleDateString('es-AR')}</span>
+                        </div>
+                      )}
 
                       {/* Advertencia */}
                       {advertencia && (
@@ -231,7 +353,7 @@ const DemandaUsuario = ({ userId }: { userId: string }) => {
                       )}
                     </div>
 
-                    {/* Acciones - Botones responsivos */}
+                    {/* Acciones - Solo para demandas aprobadas */}
                     <div className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-100 mt-auto">
                       <div className="flex flex-col xs:flex-row gap-2 sm:gap-3">
                         <button
